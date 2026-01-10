@@ -23,11 +23,14 @@
 		8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F172F12693E00DAA24B /* ErrorView.swift */; };
 		8C9D4F1A2F126E5600DAA24B /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F192F126E5100DAA24B /* ConnectView.swift */; };
 		8C9D4F1C2F126EEA00DAA24B /* StatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F1B2F126EE700DAA24B /* StatusCard.swift */; };
+		8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C52F128F06000A9C3C /* connected.mp3 */; };
+		8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */; };
 		A1000001 /* PostureDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011 /* PostureDetectorApp.swift */; };
 		A1000003 /* PostureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013 /* PostureMonitor.swift */; };
 		A1000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000014 /* Assets.xcassets */; };
 		A1000005 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000015 /* Preview Assets.xcassets */; };
 		A1000006 /* PostureVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016 /* PostureVisualizer.swift */; };
+		A1000007 /* BluetoothMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017 /* BluetoothMonitor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,12 +74,15 @@
 		8C9D4F172F12693E00DAA24B /* ErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorView.swift; sourceTree = "<group>"; };
 		8C9D4F192F126E5100DAA24B /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		8C9D4F1B2F126EE700DAA24B /* StatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusCard.swift; sourceTree = "<group>"; };
+		8CD3D1C52F128F06000A9C3C /* connected.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = connected.mp3; sourceTree = "<group>"; };
+		8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BluetoothMonitor+Connect.swift"; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
 		A1000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A1000015 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A1000016 /* PostureVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureVisualizer.swift; sourceTree = "<group>"; };
+		A1000017 /* BluetoothMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -137,10 +143,12 @@
 		8C9D4EF12F122ED100DAA24B /* Domain */ = {
 			isa = PBXGroup;
 			children = (
+				8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */,
 				A1000013 /* PostureMonitor.swift */,
 				8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */,
 				8C9D4EFA2F12307A00DAA24B /* PostureMonitor+Notification.swift */,
-				8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */,
+				A1000017 /* BluetoothMonitor.swift */,
+				8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -156,6 +164,7 @@
 		8C9D4EF32F122EF800DAA24B /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8CD3D1C52F128F06000A9C3C /* connected.mp3 */,
 				A1000014 /* Assets.xcassets */,
 			);
 			path = Resources;
@@ -348,6 +357,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000005 /* Preview Assets.xcassets in Resources */,
+				8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */,
 				A1000004 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -380,8 +390,10 @@
 				8C9D4F0E2F12644B00DAA24B /* View+.swift in Sources */,
 				8C9D4F162F1268F700DAA24B /* MetricsView.swift in Sources */,
 				8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */,
+				8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */,
 				8C9D4F122F1265A500DAA24B /* CalendarScreen.swift in Sources */,
 				8C9D4F072F12626100DAA24B /* SFSymbol.swift in Sources */,
+				A1000007 /* BluetoothMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

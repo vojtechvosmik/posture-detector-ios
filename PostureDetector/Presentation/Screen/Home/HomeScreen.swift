@@ -9,9 +9,16 @@ import SwiftUI
 
 struct HomeScreen: View {
     @StateObject private var postureMonitor = PostureMonitor()
+    @StateObject private var bluetoothMonitor: BluetoothMonitor
     @State private var isMonitoring = false
     @State private var isSoundEnabled = true
     @State private var isNotificationEnabled = true
+
+    init() {
+        let monitor = PostureMonitor()
+        _postureMonitor = StateObject(wrappedValue: monitor)
+        _bluetoothMonitor = StateObject(wrappedValue: BluetoothMonitor(postureMonitor: monitor))
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -34,7 +41,13 @@ struct HomeScreen: View {
             if let errorMessage = postureMonitor.errorMessage {
                 ErrorView(message: errorMessage)
             } else if !postureMonitor.isConnected {
-                ConnectView()
+                ConnectView(
+                    connectionState: bluetoothMonitor.connectionState,
+                    deviceName: bluetoothMonitor.connectedDeviceName,
+                    onForceConnect: {
+                        bluetoothMonitor.forceConnect()
+                    }
+                )
             } else {
                 PostureVisualizer(
                     pitch: postureMonitor.pitch,
@@ -46,6 +59,26 @@ struct HomeScreen: View {
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(20)
                 .blur(radius: isMonitoring ? 0 : 3)
+                .overlay(alignment: .bottomTrailing) {
+                    Button(action: {
+                        if isMonitoring {
+                            postureMonitor.stopMonitoring()
+                            isMonitoring = false
+                        } else {
+                            postureMonitor.startMonitoring()
+                            isMonitoring = true
+                        }
+                    }) {
+                        Image(systemName: isMonitoring ? "stop.fill" : "play.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(isMonitoring ? .red : .green)
+                            .frame(width: 60, height: 60)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(radius: 10)
+                    }
+                    .padding(16)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)
@@ -60,26 +93,6 @@ struct HomeScreen: View {
         .background(Color.white.opacity(0.4))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
-        .overlay(alignment: .bottomTrailing) {
-            Button(action: {
-                if isMonitoring {
-                    postureMonitor.stopMonitoring()
-                    isMonitoring = false
-                } else {
-                    postureMonitor.startMonitoring()
-                    isMonitoring = true
-                }
-            }) {
-                Image(systemName: isMonitoring ? "stop.fill" : "play.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(isMonitoring ? .red : .green)
-                    .frame(width: 60, height: 60)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .shadow(radius: 10)
-            }
-            .padding(16)
-        }
     }
 
     @ViewBuilder private var metricsCard: some View {
