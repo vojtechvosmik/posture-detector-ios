@@ -28,6 +28,9 @@
 		8CD3D1CB2F12A264000A9C3C /* RoutePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */; };
 		8CD3D1CD2F12A34C000A9C3C /* CurrentAudioOutputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */; };
 		8CD3D1CF2F12A74F000A9C3C /* PostureMonitor+Sound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CE2F12A74F000A9C3C /* PostureMonitor+Sound.swift */; };
+		8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */; };
+		8CD3D1D32F12DA54000A9C3C /* PostureDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */; };
+		8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */; };
 		A1000001 /* PostureDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011 /* PostureDetectorApp.swift */; };
 		A1000003 /* PostureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013 /* PostureMonitor.swift */; };
 		A1000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000014 /* Assets.xcassets */; };
@@ -82,6 +85,9 @@
 		8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePickerView.swift; sourceTree = "<group>"; };
 		8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAudioOutputView.swift; sourceTree = "<group>"; };
 		8CD3D1CE2F12A74F000A9C3C /* PostureMonitor+Sound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Sound.swift"; sourceTree = "<group>"; };
+		8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureHistory.swift; sourceTree = "<group>"; };
+		8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDataStore.swift; sourceTree = "<group>"; };
+		8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Session.swift"; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
@@ -154,6 +160,7 @@
 				8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */,
 				8C9D4EFA2F12307A00DAA24B /* PostureMonitor+Notification.swift */,
 				8CD3D1CE2F12A74F000A9C3C /* PostureMonitor+Sound.swift */,
+				8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */,
 				A1000017 /* BluetoothMonitor.swift */,
 				8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */,
 			);
@@ -163,6 +170,8 @@
 		8C9D4EF22F122ED800DAA24B /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */,
+				8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */,
 				8C9D4F062F12625F00DAA24B /* SFSymbol.swift */,
 			);
 			path = Data;
@@ -393,15 +402,18 @@
 				A1000006 /* PostureVisualizer.swift in Sources */,
 				8CD3D1CB2F12A264000A9C3C /* RoutePickerView.swift in Sources */,
 				A1000001 /* PostureDetectorApp.swift in Sources */,
+				8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */,
 				8C9D4F052F1261C600DAA24B /* AppRoot.swift in Sources */,
 				8C9D4F0B2F1262BB00DAA24B /* HomeScreen.swift in Sources */,
 				8C9D4EFB2F12308300DAA24B /* PostureMonitor+Notification.swift in Sources */,
+				8CD3D1D32F12DA54000A9C3C /* PostureDataStore.swift in Sources */,
 				8C9D4F1C2F126EEA00DAA24B /* StatusCard.swift in Sources */,
 				8C9D4EF62F122F9400DAA24B /* PostureMonitor+ActivityKit.swift in Sources */,
 				8CD3D1CF2F12A74F000A9C3C /* PostureMonitor+Sound.swift in Sources */,
 				8C9D4F0E2F12644B00DAA24B /* View+.swift in Sources */,
 				8C9D4F162F1268F700DAA24B /* MetricsView.swift in Sources */,
 				8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */,
+				8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */,
 				8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */,
 				8C9D4F122F1265A500DAA24B /* CalendarScreen.swift in Sources */,
 				8C9D4F072F12626100DAA24B /* SFSymbol.swift in Sources */,

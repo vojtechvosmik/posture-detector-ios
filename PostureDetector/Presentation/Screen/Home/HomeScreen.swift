@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeScreen: View {
     @StateObject private var postureMonitor = PostureMonitor()
     @StateObject private var bluetoothMonitor: BluetoothMonitor
+    @StateObject private var dataStore = PostureDataStore()
     @State private var isMonitoring = false
     @State private var isSoundEnabled = true
     @State private var isNotificationEnabled = true
@@ -34,12 +35,20 @@ struct HomeScreen: View {
         .background(.gray.opacity(0.05))
         .navigationTitle("Posture Detector")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            postureMonitor.setDataStore(dataStore)
+        }
     }
 
     @ViewBuilder private var statusCard: some View {
         ZStack {
             if let errorMessage = postureMonitor.errorMessage {
                 ErrorView(message: errorMessage)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.9).combined(with: .opacity),
+                        removal: .scale(scale: 0.95).combined(with: .opacity)
+                    ))
+                    .id("error")
             } else if !postureMonitor.isConnected {
                 ConnectView(
                     connectionState: bluetoothMonitor.connectionState,
@@ -48,6 +57,11 @@ struct HomeScreen: View {
                         bluetoothMonitor.forceConnect()
                     }
                 )
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.9).combined(with: .opacity),
+                    removal: .scale(scale: 0.95).combined(with: .opacity)
+                ))
+                .id("connect")
             } else {
                 PostureVisualizer(
                     pitch: postureMonitor.pitch,
@@ -61,12 +75,14 @@ struct HomeScreen: View {
                 .blur(radius: isMonitoring ? 0 : 3)
                 .overlay(alignment: .bottomTrailing) {
                     Button(action: {
-                        if isMonitoring {
-                            postureMonitor.stopMonitoring()
-                            isMonitoring = false
-                        } else {
-                            postureMonitor.startMonitoring()
-                            isMonitoring = true
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            if isMonitoring {
+                                postureMonitor.stopMonitoring()
+                                isMonitoring = false
+                            } else {
+                                postureMonitor.startMonitoring()
+                                isMonitoring = true
+                            }
                         }
                     }) {
                         Image(systemName: isMonitoring ? "stop.fill" : "play.fill")
@@ -82,12 +98,21 @@ struct HomeScreen: View {
                 .overlay(alignment: .bottomLeading) {
                     CurrentAudioOutputView().padding(16)
                 }
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.9).combined(with: .opacity),
+                    removal: .scale(scale: 0.95).combined(with: .opacity)
+                ))
+                .id("posture")
             }
         }
+        .animation(.spring(response: 0.5, dampingFraction: 0.75), value: postureMonitor.errorMessage)
+        .animation(.spring(response: 0.5, dampingFraction: 0.75), value: postureMonitor.isConnected)
         .frame(maxWidth: .infinity, alignment: .center)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: postureMonitor.postureStatus.backgroundColors),
+                gradient: Gradient(
+                    colors: postureMonitor.isConnected ? postureMonitor.postureStatus.backgroundColors : PostureStatus.unknown.backgroundColors
+                ),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -127,6 +152,9 @@ struct HomeScreen: View {
     }
 
     @ViewBuilder private var scoreMeterCard: some View {
+        let score = dataStore.todayHistory.score
+        let scoreColor: Color = score >= 80 ? .green : score >= 60 ? .orange : .red
+
         VStack(spacing: 20) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -141,31 +169,43 @@ struct HomeScreen: View {
 
                 Spacer()
 
-                Text("85")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(.green)
+                Group {
+                    if #available(iOS 16.0, *) {
+                        Text("\(score)")
+                            .contentTransition(.numericText())
+                    } else {
+                        Text("\(score)")
+                    }
+                }
+                .font(.system(size: 36, weight: .bold))
+                .foregroundColor(scoreColor)
+                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: score)
             }
 
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.15))
-                    .frame(height: 16)
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(height: 16)
 
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color.green, Color.green.opacity(0.7)]),
-                            startPoint: .leading,
-                            endPoint: .trailing
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [scoreColor, scoreColor.opacity(0.7)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
-                    .frame(width: 250 * 0.85, height: 16)
+                        .frame(width: geometry.size.width * (CGFloat(score) / 100.0), height: 16)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.75), value: score)
+                }
             }
+            .frame(height: 16)
 
             HStack(spacing: 16) {
                 ScoreStatItem(
                     icon: "checkmark.circle.fill",
-                    value: "6.5h",
+                    value: dataStore.todayHistory.goodPostureDuration,
                     label: "Good Posture",
                     color: .green
                 )
@@ -175,7 +215,7 @@ struct HomeScreen: View {
 
                 ScoreStatItem(
                     icon: "exclamationmark.triangle.fill",
-                    value: "12",
+                    value: "\(dataStore.todayHistory.alertCount)",
                     label: "Alerts",
                     color: .orange
                 )
@@ -184,10 +224,10 @@ struct HomeScreen: View {
                     .frame(height: 40)
 
                 ScoreStatItem(
-                    icon: "chart.line.uptrend.xyaxis",
-                    value: "+5%",
+                    icon: scoreImprovementIcon,
+                    value: dataStore.scoreImprovementPercentage,
                     label: "vs Yesterday",
-                    color: .blue
+                    color: scoreImprovementColor
                 )
             }
         }
@@ -195,6 +235,26 @@ struct HomeScreen: View {
         .background(Color.white)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    private var scoreImprovementIcon: String {
+        if dataStore.scoreImprovement > 0 {
+            return "chart.line.uptrend.xyaxis"
+        } else if dataStore.scoreImprovement < 0 {
+            return "chart.line.downtrend.xyaxis"
+        } else {
+            return "chart.line.flattrend.xyaxis"
+        }
+    }
+
+    private var scoreImprovementColor: Color {
+        if dataStore.scoreImprovement > 0 {
+            return .green
+        } else if dataStore.scoreImprovement < 0 {
+            return .red
+        } else {
+            return .blue
+        }
     }
 }
 

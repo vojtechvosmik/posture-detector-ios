@@ -20,6 +20,10 @@ class PostureMonitor: ObservableObject {
     @Published var roll: Double = 0.0   // Left/right tilt
     @Published var errorMessage: String?
 
+    // Session tracking
+    let sessionTracker = SessionTracker()
+    var dataStore: PostureDataStore?
+
     // Live Activity
     #if canImport(ActivityKit)
     var currentActivity: Any?  // Activity<PostureAttributes> on iOS 16.1+
@@ -42,6 +46,10 @@ class PostureMonitor: ObservableObject {
         requestNotificationPermission()
     }
 
+    func setDataStore(_ dataStore: PostureDataStore) {
+        self.dataStore = dataStore
+    }
+
     func checkAvailability() {
         guard motionManager.isDeviceMotionAvailable else {
             errorMessage = "Headphone motion tracking not available on this device"
@@ -54,6 +62,11 @@ class PostureMonitor: ObservableObject {
         guard motionManager.isDeviceMotionAvailable else {
             errorMessage = "Please connect AirPods Pro or AirPods Max"
             return
+        }
+
+        // Start session tracking
+        if let dataStore = dataStore {
+            sessionTracker.startSession(dataStore: dataStore)
         }
 
         // Start Live Activity
@@ -106,9 +119,13 @@ class PostureMonitor: ObservableObject {
                 self.postureStatus = .good
             }
 
+            // Track posture time
+            self.sessionTracker.updatePostureStatus(self.postureStatus)
+
             // Send notification if posture changed to bad
             if previousStatus == .good && self.postureStatus != .good {
                 self.sendBadPostureNotification()
+                self.sessionTracker.incrementAlertCount()
             }
 
             // Update Live Activity
@@ -119,6 +136,9 @@ class PostureMonitor: ObservableObject {
     }
 
     func stopMonitoring() {
+        // End session tracking
+        sessionTracker.endSession()
+
         motionManager.stopDeviceMotionUpdates()
         //isConnected = false
         postureStatus = .unknown
