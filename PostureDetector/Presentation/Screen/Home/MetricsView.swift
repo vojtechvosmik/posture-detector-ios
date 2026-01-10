@@ -15,7 +15,9 @@ struct MetricsView: View {
         VStack(spacing: 12) {
             Text("Live Metrics")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 8)
 
             HStack(spacing: 20) {
                 MetricItem(
@@ -25,7 +27,7 @@ struct MetricsView: View {
                 )
 
                 Divider()
-                    .background(Color.white.opacity(0.3))
+                    .background(Color.black.opacity(0.3))
                     .frame(height: 40)
 
                 MetricItem(
@@ -36,8 +38,6 @@ struct MetricsView: View {
             }
         }
         .padding()
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(15)
     }
 }
 
@@ -50,16 +50,16 @@ private struct MetricItem: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(.white)
+                .foregroundColor(.black)
 
             Text(label)
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(.black.opacity(0.8))
 
             Text(String(format: "%.2f°", value * 180 / .pi))
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(.black)
         }
         .frame(maxWidth: .infinity)
     }
