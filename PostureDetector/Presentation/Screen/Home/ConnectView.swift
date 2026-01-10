@@ -36,21 +36,40 @@ struct ConnectView: View {
                 .background(Color.white.opacity(1.8))
 
             if connectionState == .connectedElsewhere {
-                // Show force connect button
-                Button(action: onForceConnect) {
-                    HStack {
-                        Image(systemName: "link.circle.fill")
-                            .font(.system(size: 16))
+                // Show buttons
+                VStack(spacing: 12) {
 
-                        Text("Connect to This Device")
+                    // AirPlay Route Picker Button
+                    HStack {
+                        Text("Choose AirPods →")
                             .font(.subheadline)
                             .fontWeight(.semibold)
+
+                        RoutePickerView()
+                            .frame(width: 30, height: 30)
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
                     .background(Color.white.opacity(0.2))
                     .cornerRadius(10)
+
+                    // Force connect button
+                    Button(action: onForceConnect) {
+                        HStack {
+                            Image(systemName: "link.circle.fill")
+                                .font(.system(size: 16))
+
+                            Text("Quick Connect")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.15))
+                        .cornerRadius(10)
+                    }
                 }
             } else {
                 // Show waiting status
@@ -82,9 +101,9 @@ struct ConnectView: View {
     private var titleText: String {
         switch connectionState {
         case .disconnected:
-            return "Connect your AirPods"
+            return "Disconnected"
         case .connectedElsewhere:
-            return "AirPods Detected"
+            return "Connect your AirPods"
         case .connectedAndActive:
             return "Connected"
         }
@@ -95,9 +114,6 @@ struct ConnectView: View {
         case .disconnected:
             return "To get posture tips, please connect your AirPods Pro or AirPods Max."
         case .connectedElsewhere:
-            if let name = deviceName {
-                return "\(name) are connected to another device. Tap below to connect them to this device."
-            }
             return "Your AirPods are connected to another device. Tap below to connect them to this device."
         case .connectedAndActive:
             return "Your AirPods are ready!"

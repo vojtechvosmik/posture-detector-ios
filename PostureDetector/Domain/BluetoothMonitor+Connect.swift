@@ -29,62 +29,35 @@ extension BluetoothMonitor {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 self?.playConnectionTone()
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                self?.playConnectionTone()
+            }
         } catch {
             print("[BluetoothMonitor] Failed to setup audio session: \(error)")
         }
     }
 
     private func playConnectionTone() {
-        // Create audio engine
-        let audioEngine = AVAudioEngine()
-        let playerNode = AVAudioPlayerNode()
-
-        // Create a short beep (440 Hz tone, 0.2 seconds)
-        let sampleRate = 44100.0
-        let duration = 0.2
-        let frequency = 440.0
-        let frameCount = UInt32(sampleRate * duration)
-
-        // Use stereo format to match the mixer
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
-              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-            print("[BluetoothMonitor] Failed to create audio buffer")
+        // Get the path to connected.mp3
+        guard let soundURL = Bundle.main.url(forResource: "connected", withExtension: "mp3") else {
+            print("[BluetoothMonitor] Failed to find connected.mp3")
             return
         }
 
-        buffer.frameLength = frameCount
-
-        // Generate sine wave for beep in both channels
-        if let data = buffer.floatChannelData {
-            let amplitude: Float = 0.3
-            for frame in 0..<Int(frameCount) {
-                let value = Float(sin(2.0 * Double.pi * frequency * Double(frame) / sampleRate)) * amplitude
-                data[0][frame] = value  // Left channel
-                data[1][frame] = value  // Right channel
-            }
-        }
-
-        audioEngine.attach(playerNode)
-        audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: format)
-
         do {
-            try audioEngine.start()
+            // Create audio player
+            let audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            audioPlayer.prepareToPlay()
+            audioPlayer.play()
 
-            playerNode.scheduleBuffer(buffer) {
-                print("[BluetoothMonitor] Connection tone playback completed")
-                audioEngine.stop()
+            print("[BluetoothMonitor] Playing connected.mp3 to force AirPods switch...")
 
-                // Recheck connection after playback
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                    self?.checkConnection()
-                }
+            // Recheck connection after playback (estimated duration)
+            DispatchQueue.main.asyncAfter(deadline: .now() + audioPlayer.duration + 0.5) { [weak self] in
+                self?.checkConnection()
             }
-
-            playerNode.play()
-            print("[BluetoothMonitor] Playing connection tone to force AirPods switch...")
-
         } catch {
-            print("[BluetoothMonitor] Failed to play connection tone: \(error)")
+            print("[BluetoothMonitor] Failed to play connected.mp3: \(error)")
         }
     }
 }

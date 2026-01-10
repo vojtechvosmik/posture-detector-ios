@@ -120,7 +120,7 @@ class PostureMonitor: ObservableObject {
 
     func stopMonitoring() {
         motionManager.stopDeviceMotionUpdates()
-        isConnected = false
+        //isConnected = false
         postureStatus = .unknown
 
         if #available(iOS 16.1, *) {

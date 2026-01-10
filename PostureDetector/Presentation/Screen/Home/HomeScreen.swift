@@ -79,6 +79,9 @@ struct HomeScreen: View {
                     }
                     .padding(16)
                 }
+                .overlay(alignment: .bottomLeading) {
+                    CurrentAudioOutputView().padding(16)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)
