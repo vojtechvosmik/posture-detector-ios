@@ -636,6 +636,7 @@
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PosturePlus;
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -672,6 +673,7 @@
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PosturePlus;
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

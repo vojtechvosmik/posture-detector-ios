@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct PostureDetectorApp: App {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
     var body: some Scene {
         WindowGroup {
-            AppRoot()
+            if hasCompletedOnboarding {
+                AppRoot()
+            } else {
+                OnboardingView(isOnboardingComplete: $hasCompletedOnboarding)
+            }
         }
     }
 }
