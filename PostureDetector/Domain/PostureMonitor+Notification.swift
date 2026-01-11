@@ -9,6 +9,9 @@ import UserNotifications
 
 extension PostureMonitor {
 
+    // Notification identifier for bad posture alerts
+    private static let badPostureNotificationID = "bad-posture-alert"
+
     func requestNotificationPermission() {
         notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
@@ -18,27 +21,29 @@ extension PostureMonitor {
     }
 
     func sendBadPostureNotification() {
-        // Throttle notifications
-        if let lastTime = lastNotificationTime,
-           Date().timeIntervalSince(lastTime) < notificationCooldown {
-            return
-        }
-
         let content = UNMutableNotificationContent()
         content.title = "Posture Alert"
         content.body = "Your posture needs attention! Sit up straight."
         content.sound = .default
 
         let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
+            identifier: Self.badPostureNotificationID,
             content: content,
             trigger: nil  // Immediate notification
         )
 
-        notificationCenter.add(request) { [weak self] error in
-            if error == nil {
-                self?.lastNotificationTime = Date()
+        notificationCenter.add(request) { error in
+            if let error = error {
+                print("[PostureMonitor] Failed to send notification: \(error)")
             }
         }
+    }
+
+    func removePostureNotifications() {
+        // Remove delivered notifications from notification center
+        notificationCenter.removeDeliveredNotifications(withIdentifiers: [Self.badPostureNotificationID])
+
+        // Remove pending notifications
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: [Self.badPostureNotificationID])
     }
 }

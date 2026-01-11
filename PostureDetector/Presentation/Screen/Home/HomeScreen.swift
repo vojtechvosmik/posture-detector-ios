@@ -11,8 +11,6 @@ struct HomeScreen: View {
     @StateObject private var postureMonitor = PostureMonitor()
     @StateObject private var bluetoothMonitor: BluetoothMonitor
     @StateObject private var dataStore = PostureDataStore()
-    @State private var isSoundEnabled = true
-    @State private var isNotificationEnabled = true
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -120,6 +118,8 @@ struct HomeScreen: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            .animation(.easeInOut(duration: 0.6), value: postureMonitor.postureStatus)
+            .opacity(postureMonitor.isMonitoring ? 1 : 0.5)
         )
         .background(Color.white.opacity(0.4))
         .cornerRadius(20)
@@ -141,14 +141,14 @@ struct HomeScreen: View {
             GridCardToggle(
                 title: "Sound",
                 icon: "speaker.wave.2.fill",
-                isOn: $isSoundEnabled,
+                isOn: $postureMonitor.isSoundEnabled,
                 activeColors: [Color.purple, Color.purple.opacity(0.7)]
             )
 
             GridCardToggle(
                 title: "Notify",
                 icon: "bell.fill",
-                isOn: $isNotificationEnabled,
+                isOn: $postureMonitor.isNotificationEnabled,
                 activeColors: [Color.blue, Color.blue.opacity(0.7)]
             )
         }

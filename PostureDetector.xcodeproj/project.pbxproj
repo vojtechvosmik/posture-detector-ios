@@ -33,6 +33,7 @@
 		8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */; };
 		8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */; };
 		8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */; };
+		8CD3D1DB2F13C19F000A9C3C /* alert.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */; };
 		A1000001 /* PostureDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011 /* PostureDetectorApp.swift */; };
 		A1000003 /* PostureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013 /* PostureMonitor.swift */; };
 		A1000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000014 /* Assets.xcassets */; };
@@ -92,6 +93,7 @@
 		8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Session.swift"; sourceTree = "<group>"; };
 		8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarGridView.swift; sourceTree = "<group>"; };
 		8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
+		8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = alert.mp3; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
@@ -184,6 +186,7 @@
 		8C9D4EF32F122EF800DAA24B /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */,
 				8CD3D1C52F128F06000A9C3C /* connected.mp3 */,
 				A1000014 /* Assets.xcassets */,
 			);
@@ -383,6 +386,7 @@
 				A1000005 /* Preview Assets.xcassets in Resources */,
 				8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */,
 				A1000004 /* Assets.xcassets in Resources */,
+				8CD3D1DB2F13C19F000A9C3C /* alert.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,6 +9,7 @@ import Foundation
 import CoreMotion
 import Combine
 import UserNotifications
+import AVFoundation
 
 class PostureMonitor: ObservableObject {
     private let motionManager = CMHeadphoneMotionManager()
@@ -48,6 +49,15 @@ class PostureMonitor: ObservableObject {
     private var disconnectionTimer: Timer?
     private let disconnectionTimeout: TimeInterval = 60.0  // 60 seconds
 
+    // Notification settings
+    @Published var isNotificationEnabled = true
+    @Published var isSoundEnabled = true
+    private var badPostureTimer: Timer?
+    private let badPostureNotificationDelay: TimeInterval = 5.0  // 5 seconds
+
+    // Audio player for sound feedback
+    var audioPlayer: AVAudioPlayer?
+
     // Calibration: Good posture is around pitch 0 and roll 0
     private let targetPitch: Double = 0.0
     private let targetRoll: Double = 0.0
@@ -55,10 +65,6 @@ class PostureMonitor: ObservableObject {
     // Thresholds for bad posture detection (in radians)
     private let pitchThreshold: Double = 0.20  // ~20 degrees forward/backward
     private let rollThreshold: Double = 0.20   // ~15 degrees sideways
-
-    // Notification throttling
-    var lastNotificationTime: Date?
-    let notificationCooldown: TimeInterval = 60  // Send notification max once per minute
 
     init() {
         checkAvailability()
@@ -136,7 +142,6 @@ class PostureMonitor: ObservableObject {
             // Detect bad posture based on deviation magnitude
             let isForwardLean = pitchDeviation > self.pitchThreshold
             let isSidewaysLean = rollDeviation > self.rollThreshold
-            print("[PostureMonitor] pitchDeviation: \(pitchDeviation), rollDeviation: \(rollDeviation)")
 
             let previousStatus = self.postureStatus
 
@@ -153,10 +158,14 @@ class PostureMonitor: ObservableObject {
             // Track posture time
             self.sessionTracker.updatePostureStatus(self.postureStatus)
 
-            // Send notification if posture changed to bad
+            // Handle posture status changes
             if previousStatus == .good && self.postureStatus != .good {
-                self.sendBadPostureNotification()
-                self.sessionTracker.incrementAlertCount()
+                // Bad posture detected - start 5 second timer
+                self.startBadPostureTimer()
+            } else if previousStatus != .good && self.postureStatus == .good {
+                // Posture improved - cancel timer and remove notifications
+                self.cancelBadPostureTimer()
+                self.removePostureNotifications()
             }
 
             // Update Live Activity
@@ -196,6 +205,36 @@ class PostureMonitor: ObservableObject {
         disconnectionTimer = nil
     }
 
+    private func startBadPostureTimer() {
+        // Cancel any existing timer
+        cancelBadPostureTimer()
+
+        // Start new timer
+        badPostureTimer = Timer.scheduledTimer(withTimeInterval: badPostureNotificationDelay, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+
+            // Check if still in bad posture
+            if self.postureStatus != .good {
+                // Play sound if enabled
+                if self.isSoundEnabled {
+                    self.playBadPostureSound()
+                }
+
+                // Send notification if enabled
+                if self.isNotificationEnabled {
+                    self.sendBadPostureNotification()
+                }
+
+                self.sessionTracker.incrementAlertCount()
+            }
+        }
+    }
+
+    private func cancelBadPostureTimer() {
+        badPostureTimer?.invalidate()
+        badPostureTimer = nil
+    }
+
     func endLiveActivityIfNotMonitoring() {
         if !isMonitoring {
             if #available(iOS 16.1, *) {
@@ -207,5 +246,6 @@ class PostureMonitor: ObservableObject {
     deinit {
         stopMonitoring()
         cancelDisconnectionTimer()
+        cancelBadPostureTimer()
     }
 }
