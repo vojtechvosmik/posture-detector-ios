@@ -451,7 +451,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Z73ZCZRS2N;
+				DEVELOPMENT_TEAM = GF3CDPK63B;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PostureLiveActivity/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PostureLiveActivity;
@@ -463,7 +463,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PostureDetector.PostureLiveActivity;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.peachdev.postureplus.PostureLiveActivity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -482,7 +482,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Z73ZCZRS2N;
+				DEVELOPMENT_TEAM = GF3CDPK63B;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PostureLiveActivity/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PostureLiveActivity;
@@ -494,7 +494,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PostureDetector.PostureLiveActivity;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.peachdev.postureplus.PostureLiveActivity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -633,7 +633,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
-				DEVELOPMENT_TEAM = Z73ZCZRS2N;
+				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
@@ -649,7 +649,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PostureDetector;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.peachdev.postureplus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -669,7 +669,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
-				DEVELOPMENT_TEAM = Z73ZCZRS2N;
+				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
@@ -685,7 +685,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PostureDetector;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.peachdev.postureplus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
