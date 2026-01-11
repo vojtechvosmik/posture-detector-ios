@@ -46,6 +46,27 @@ private struct MetricItem: View {
     let value: Double
     let icon: String
 
+    // Convert radians to degrees
+    private var degrees: Double {
+        value * 180 / .pi
+    }
+
+    // Normalize to 0-1 range (assuming max tilt is ±45 degrees)
+    private var normalizedValue: Double {
+        let maxDegrees: Double = 45.0
+        return min(abs(degrees) / maxDegrees, 1.0)
+    }
+
+    private var meterColor: Color {
+        if abs(degrees) > 20 {
+            return .red
+        } else if abs(degrees) > 10 {
+            return .orange
+        } else {
+            return .green
+        }
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
@@ -56,19 +77,44 @@ private struct MetricItem: View {
                 .font(.caption)
                 .foregroundColor(.black.opacity(0.8))
 
-            if #available(iOS 16.0, *) {
-                Text(String(format: "%.2f°", value * 180 / .pi))
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.black)
-                    .contentTransition(.numericText())
-            } else {
-                Text(String(format: "%.2f°", value * 180 / .pi))
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.black)
-            }
+            // Meter bar
+            VStack(spacing: 4) {
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(height: 8)
 
+                        // Fill based on value
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: [meterColor, meterColor.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width * normalizedValue, height: 8)
+                            .animation(.easeInOut(duration: 0.3), value: normalizedValue)
+                    }
+                }
+                .frame(width: 80, height: 8)
+
+                // Value text
+                if #available(iOS 16.0, *) {
+                    Text(String(format: "%.1f°", degrees))
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.black.opacity(0.7))
+                        .contentTransition(.numericText())
+                } else {
+                    Text(String(format: "%.1f°", degrees))
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.black.opacity(0.7))
+                }
+            }
         }
         .frame(maxWidth: .infinity)
     }
