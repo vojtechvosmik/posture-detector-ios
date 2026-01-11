@@ -18,12 +18,14 @@ public struct PostureAttributes: ActivityAttributes {
         public var pitch: Double
         public var roll: Double
         public var timestamp: Date
+        public var isConnected: Bool
 
-        public init(postureStatus: String, pitch: Double, roll: Double, timestamp: Date) {
+        public init(postureStatus: String, pitch: Double, roll: Double, timestamp: Date, isConnected: Bool) {
             self.postureStatus = postureStatus
             self.pitch = pitch
             self.roll = roll
             self.timestamp = timestamp
+            self.isConnected = isConnected
         }
     }
 
@@ -50,7 +52,8 @@ extension PostureMonitor {
             postureStatus: postureStatus.description,
             pitch: pitch,
             roll: roll,
-            timestamp: Date()
+            timestamp: Date(),
+            isConnected: isConnected
         )
 
         let attributes = PostureAttributes()
@@ -86,7 +89,8 @@ extension PostureMonitor {
             postureStatus: postureStatus.description,
             pitch: pitch,
             roll: roll,
-            timestamp: Date()
+            timestamp: Date(),
+            isConnected: isConnected
         )
 
         Task {

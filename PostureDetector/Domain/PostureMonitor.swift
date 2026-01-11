@@ -14,7 +14,14 @@ class PostureMonitor: ObservableObject {
     private let motionManager = CMHeadphoneMotionManager()
     let notificationCenter = UNUserNotificationCenter.current()
 
-    @Published var isConnected = false
+    @Published var isConnected = false {
+        didSet {
+            // Update Live Activity when connection state changes
+            if #available(iOS 16.1, *), currentActivity != nil {
+                updateLiveActivity()
+            }
+        }
+    }
     @Published var postureStatus: PostureStatus = .unknown
     @Published var pitch: Double = 0.0  // Forward/backward tilt
     @Published var roll: Double = 0.0   // Left/right tilt
@@ -80,11 +87,21 @@ class PostureMonitor: ObservableObject {
             if let error = error {
                 self.errorMessage = "Error: \(error.localizedDescription)"
                 self.isConnected = false
+
+                // Update Live Activity to show disconnected state
+                if #available(iOS 16.1, *) {
+                    self.updateLiveActivity()
+                }
                 return
             }
 
             guard let motion = motion else {
                 self.isConnected = false
+
+                // Update Live Activity to show disconnected state
+                if #available(iOS 16.1, *) {
+                    self.updateLiveActivity()
+                }
                 return
             }
 

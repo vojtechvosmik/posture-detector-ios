@@ -16,6 +16,7 @@ struct PostureAttributes: ActivityAttributes {
         var pitch: Double
         var roll: Double
         var timestamp: Date
+        var isConnected: Bool
     }
 }
 
@@ -23,118 +24,218 @@ struct PostureLiveActivityLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PostureAttributes.self) { context in
             // Lock screen/banner UI goes here
-            HStack(spacing: 12) {
-                // Status icon
-                Image(systemName: statusIcon(for: context.state.postureStatus))
-                    .font(.title2)
-                    .foregroundColor(statusColor(for: context.state.postureStatus))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Posture Monitor")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    Text(context.state.postureStatus)
-                        .font(.headline)
+            if context.state.isConnected {
+                HStack(spacing: 12) {
+                    // Status icon
+                    Image(systemName: statusIcon(for: context.state.postureStatus))
+                        .font(.title2)
                         .foregroundColor(statusColor(for: context.state.postureStatus))
-                }
 
-                Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Posture Monitor")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Pitch: \(Int(context.state.pitch * 180 / .pi))°")
-                        .font(.caption2)
-                    Text("Roll: \(Int(context.state.roll * 180 / .pi))°")
-                        .font(.caption2)
+                        Text(context.state.postureStatus)
+                            .font(.headline)
+                            .foregroundColor(statusColor(for: context.state.postureStatus))
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Pitch: \(Int(context.state.pitch * 180 / .pi))°")
+                            .font(.caption2)
+                        Text("Roll: \(Int(context.state.roll * 180 / .pi))°")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.secondary)
                 }
-                .foregroundColor(.secondary)
+                .padding()
+                .activityBackgroundTint(backgroundColor(for: context.state.postureStatus))
+                .activitySystemActionForegroundColor(.white)
+            } else {
+                // Disconnected state
+                HStack(spacing: 12) {
+                    Image(systemName: "airpodspro.chargingcase.wireless.fill")
+                        .font(.title2)
+                        .foregroundColor(.orange)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Posture Monitor")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Text("AirPods Disconnected")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Reconnect AirPods")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("to continue")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+                .activityBackgroundTint(Color.orange.opacity(0.2))
+                .activitySystemActionForegroundColor(.white)
             }
-            .padding()
-            .activityBackgroundTint(backgroundColor(for: context.state.postureStatus))
-            .activitySystemActionForegroundColor(.white)
 
         } dynamicIsland: { context in
             DynamicIsland {
                 // Expanded UI for Dynamic Island
                 DynamicIslandExpandedRegion(.leading) {
-                    HStack(spacing: 8) {
-                        Image(systemName: statusIcon(for: context.state.postureStatus))
-                            .font(.system(size: 26))
-                            .foregroundColor(statusColor(for: context.state.postureStatus))
+                    if context.state.isConnected {
+                        HStack(spacing: 8) {
+                            Image(systemName: statusIcon(for: context.state.postureStatus))
+                                .font(.system(size: 26))
+                                .foregroundColor(statusColor(for: context.state.postureStatus))
 
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(shortStatus(for: context.state.postureStatus))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                            Text("Status")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(shortStatus(for: context.state.postureStatus))
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                Text("Status")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding(.leading, 8)
+                    } else {
+                        HStack(spacing: 6) {
+                            Image(systemName: "airpodspro")
+                                .font(.system(size: 24))
+                                .foregroundColor(.orange)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Disconnected")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding(.leading, 8)
+                    }
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    if context.state.isConnected {
+                        VStack(alignment: .trailing, spacing: 6) {
+                            HStack(spacing: 4) {
+                                Text("\(Int(context.state.pitch * 180 / .pi))°")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                Image(systemName: "arrow.up.down")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            HStack(spacing: 4) {
+                                Text("\(Int(context.state.roll * 180 / .pi))°")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                Image(systemName: "arrow.left.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding(.trailing, 8)
+                    } else {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(.orange)
+                            Text("Alert")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding(.trailing, 8)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.leading, 8)
-                }
-                DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 6) {
-                        HStack(spacing: 4) {
-                            Text("\(Int(context.state.pitch * 180 / .pi))°")
-                                .font(.body)
-                                .fontWeight(.semibold)
-                            Image(systemName: "arrow.up.down")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        HStack(spacing: 4) {
-                            Text("\(Int(context.state.roll * 180 / .pi))°")
-                                .font(.body)
-                                .fontWeight(.semibold)
-                            Image(systemName: "arrow.left.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.trailing, 8)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.state.postureStatus)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(statusColor(for: context.state.postureStatus))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .padding(.horizontal, 8)
+                    if context.state.isConnected {
+                        Text(context.state.postureStatus)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(statusColor(for: context.state.postureStatus))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .padding(.horizontal, 8)
+                    } else {
+                        Text("AirPods Disconnected")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.orange)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .padding(.horizontal, 8)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        Text(postureAdvice(for: context.state.postureStatus))
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
+                        if context.state.isConnected {
+                            Text(postureAdvice(for: context.state.postureStatus))
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else {
+                            Text("Reconnect your AirPods to continue monitoring")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .multilineTextAlignment(.center)
+                        }
                     }
                     .padding(.vertical, 4)
                 }
             } compactLeading: {
-                Image(systemName: compactIcon(for: context.state.postureStatus))
-                    .foregroundColor(statusColor(for: context.state.postureStatus))
-                    .transition(.scale.combined(with: .opacity))
-            } compactTrailing: {
-                HStack(spacing: 2) {
-                    Text("\(Int(abs(context.state.pitch * 180 / .pi)))")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .contentTransition(.numericText())
-                    Text("°")
-                        .font(.caption2)
+                if context.state.isConnected {
+                    Image(systemName: compactIcon(for: context.state.postureStatus))
+                        .foregroundColor(statusColor(for: context.state.postureStatus))
+                        .transition(.scale.combined(with: .opacity))
+                } else {
+                    Image(systemName: "airpodspro")
+                        .foregroundColor(.orange)
+                        .transition(.scale.combined(with: .opacity))
                 }
-                .foregroundColor(statusColor(for: context.state.postureStatus))
-            } minimal: {
-                Image(systemName: compactIcon(for: context.state.postureStatus))
+            } compactTrailing: {
+                if context.state.isConnected {
+                    HStack(spacing: 2) {
+                        Text("\(Int(abs(context.state.pitch * 180 / .pi)))")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .contentTransition(.numericText())
+                        Text("°")
+                            .font(.caption2)
+                    }
                     .foregroundColor(statusColor(for: context.state.postureStatus))
-                    .transition(.scale)
+                } else {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+            } minimal: {
+                if context.state.isConnected {
+                    Image(systemName: compactIcon(for: context.state.postureStatus))
+                        .foregroundColor(statusColor(for: context.state.postureStatus))
+                        .transition(.scale)
+                } else {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .transition(.scale)
+                }
             }
-            .keylineTint(statusColor(for: context.state.postureStatus))
+            .keylineTint(context.state.isConnected ? statusColor(for: context.state.postureStatus) : .orange)
             .contentMargins(.all, 8, for: .expanded)
         }
     }
@@ -230,7 +331,8 @@ extension PostureAttributes.ContentState {
             postureStatus: "Good Posture ✓",
             pitch: 0.05,
             roll: 0.02,
-            timestamp: Date()
+            timestamp: Date(),
+            isConnected: true
         )
     }
 
@@ -239,7 +341,18 @@ extension PostureAttributes.ContentState {
             postureStatus: "Leaning Forward",
             pitch: 0.45,
             roll: 0.1,
-            timestamp: Date()
+            timestamp: Date(),
+            isConnected: true
+        )
+    }
+
+    fileprivate static var disconnected: PostureAttributes.ContentState {
+        PostureAttributes.ContentState(
+            postureStatus: "Unknown",
+            pitch: 0.0,
+            roll: 0.0,
+            timestamp: Date(),
+            isConnected: false
         )
     }
 }
@@ -249,4 +362,5 @@ extension PostureAttributes.ContentState {
 } contentStates: {
     PostureAttributes.ContentState.goodPosture
     PostureAttributes.ContentState.badPosture
+    PostureAttributes.ContentState.disconnected
 }
