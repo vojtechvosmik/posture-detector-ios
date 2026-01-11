@@ -11,9 +11,9 @@ struct HomeScreen: View {
     @StateObject private var postureMonitor = PostureMonitor()
     @StateObject private var bluetoothMonitor: BluetoothMonitor
     @StateObject private var dataStore = PostureDataStore()
-    @State private var isMonitoring = false
     @State private var isSoundEnabled = true
     @State private var isNotificationEnabled = true
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let monitor = PostureMonitor()
@@ -37,6 +37,11 @@ struct HomeScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             postureMonitor.setDataStore(dataStore)
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .background || newPhase == .inactive {
+                postureMonitor.endLiveActivityIfNotMonitoring()
+            }
         }
     }
 
@@ -72,22 +77,20 @@ struct HomeScreen: View {
                 .padding()
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(20)
-                .blur(radius: isMonitoring ? 0 : 3)
+                .blur(radius: postureMonitor.isMonitoring ? 0 : 3)
                 .overlay(alignment: .bottomTrailing) {
                     Button(action: {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            if isMonitoring {
+                            if postureMonitor.isMonitoring {
                                 postureMonitor.stopMonitoring()
-                                isMonitoring = false
                             } else {
                                 postureMonitor.startMonitoring()
-                                isMonitoring = true
                             }
                         }
                     }) {
-                        Image(systemName: isMonitoring ? "stop.fill" : "play.fill")
+                        Image(systemName: postureMonitor.isMonitoring ? "stop.fill" : "play.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(isMonitoring ? .red : .green)
+                            .foregroundColor(postureMonitor.isMonitoring ? .red : .green)
                             .frame(width: 60, height: 60)
                             .background(Color.white)
                             .clipShape(Circle())

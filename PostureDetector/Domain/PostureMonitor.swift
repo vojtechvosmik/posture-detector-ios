@@ -19,6 +19,13 @@ class PostureMonitor: ObservableObject {
             // Update Live Activity when connection state changes
             if #available(iOS 16.1, *), currentActivity != nil {
                 updateLiveActivity()
+
+                // Handle disconnection timeout
+                if !isConnected {
+                    startDisconnectionTimer()
+                } else {
+                    cancelDisconnectionTimer()
+                }
             }
         }
     }
@@ -26,6 +33,7 @@ class PostureMonitor: ObservableObject {
     @Published var pitch: Double = 0.0  // Forward/backward tilt
     @Published var roll: Double = 0.0   // Left/right tilt
     @Published var errorMessage: String?
+    @Published var isMonitoring = false
 
     // Session tracking
     let sessionTracker = SessionTracker()
@@ -35,6 +43,10 @@ class PostureMonitor: ObservableObject {
     #if canImport(ActivityKit)
     var currentActivity: Any?  // Activity<PostureAttributes> on iOS 16.1+
     #endif
+
+    // Disconnection timer
+    private var disconnectionTimer: Timer?
+    private let disconnectionTimeout: TimeInterval = 60.0  // 60 seconds
 
     // Calibration: Good posture is around pitch 0 and roll 0
     private let targetPitch: Double = 0.0
@@ -70,6 +82,8 @@ class PostureMonitor: ObservableObject {
             errorMessage = "Please connect AirPods Pro or AirPods Max"
             return
         }
+
+        isMonitoring = true
 
         // Start session tracking
         if let dataStore = dataStore {
@@ -153,6 +167,8 @@ class PostureMonitor: ObservableObject {
     }
 
     func stopMonitoring() {
+        isMonitoring = false
+
         // End session tracking
         sessionTracker.endSession()
 
@@ -165,7 +181,31 @@ class PostureMonitor: ObservableObject {
         }
     }
 
+    private func startDisconnectionTimer() {
+        disconnectionTimer?.invalidate()
+        disconnectionTimer = Timer.scheduledTimer(withTimeInterval: disconnectionTimeout, repeats: false) { [weak self] _ in
+            print("[PostureMonitor] Disconnection timeout reached - ending Live Activity")
+            if #available(iOS 16.1, *) {
+                self?.endLiveActivity()
+            }
+        }
+    }
+
+    private func cancelDisconnectionTimer() {
+        disconnectionTimer?.invalidate()
+        disconnectionTimer = nil
+    }
+
+    func endLiveActivityIfNotMonitoring() {
+        if !isMonitoring {
+            if #available(iOS 16.1, *) {
+                endLiveActivity()
+            }
+        }
+    }
+
     deinit {
         stopMonitoring()
+        cancelDisconnectionTimer()
     }
 }
