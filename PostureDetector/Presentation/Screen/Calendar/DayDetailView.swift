@@ -14,7 +14,7 @@ struct DayDetailView: View {
 
     private var dateString: String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .full
+        formatter.dateStyle = .medium
         return formatter.string(from: date)
     }
 

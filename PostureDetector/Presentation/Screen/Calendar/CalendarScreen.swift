@@ -7,10 +7,16 @@
 
 import SwiftUI
 
+// Wrapper to make Date identifiable for sheet presentation
+struct IdentifiableDate: Identifiable {
+    let id = UUID()
+    let date: Date
+}
+
 struct CalendarScreen: View {
     @StateObject private var dataStore = PostureDataStore()
     @State private var currentMonth: Date = Date()
-    @State private var selectedDate: Date?
+    @State private var selectedDate: IdentifiableDate?
     @State private var showDayDetail = false
 
     private let calendar = Calendar.current
@@ -29,7 +35,7 @@ struct CalendarScreen: View {
                     month: currentMonth,
                     history: dataStore.allHistory,
                     onDayTapped: { date in
-                        selectedDate = date
+                        selectedDate = IdentifiableDate(date: date)
                         showDayDetail = true
                     }
                 )
@@ -61,13 +67,11 @@ struct CalendarScreen: View {
                 }
             }
         }
-        .sheet(isPresented: $showDayDetail) {
-            if let selectedDate = selectedDate {
-                DayDetailView(
-                    date: selectedDate,
-                    history: dataStore.getHistory(for: selectedDate)
-                )
-            }
+        .sheet(item: $selectedDate) { identifiableDate in
+            DayDetailView(
+                date: identifiableDate.date,
+                history: dataStore.getHistory(for: identifiableDate.date)
+            )
         }
     }
 

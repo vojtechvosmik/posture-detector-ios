@@ -79,16 +79,23 @@ struct PostureVisualizer: View {
                                 .offset(y: -size * 0.25 + CGFloat(i) * size * 0.5 / 8)
                         }
 
-                        // Direction indicators
+                        // Posture indicator dot - moves based on pitch and roll
                         Circle()
                             .fill(Color.white)
-                            .frame(width: size * 0.06, height: size * 0.06)
-                            .offset(y: -size * 0.2)
-                            .shadow(color: statusColor, radius: 10)
+                            .frame(width: size * 0.08, height: size * 0.08)
+                            .shadow(color: .white, radius: 10)
+                            .offset(
+                                x: roll * size * 0.15,
+                                y: -pitch * size * 0.15
+                            )
                     }
                     .clipShape(Circle())
                 }
-                .rotationEffect(.radians(pitch * 0.8))
+                .rotation3DEffect(
+                    .radians(pitch * 1.2),
+                    axis: (x: 1, y: 0, z: 0),
+                    perspective: 0.5
+                )
                 .rotation3DEffect(.radians(roll * 0.8), axis: (x: 0, y: 1, z: 0))
                 .shadow(color: statusColor.opacity(0.6), radius: 30)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pitch)
