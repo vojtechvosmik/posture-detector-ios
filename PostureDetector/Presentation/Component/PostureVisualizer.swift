@@ -121,9 +121,9 @@ struct PostureVisualizer: View {
 
     private var statusColor: Color {
         switch postureStatus {
-        case .good: return Color(red: 0.0, green: 0.8, blue: 1.0)
-        case .forwardLean, .sidewaysLean, .poorPosture: return .pink
-        case .unknown: return .gray
+        case .good: return .white
+        case .forwardLean, .sidewaysLean, .poorPosture: return .white
+        case .unknown: return .white
         }
     }
 }
