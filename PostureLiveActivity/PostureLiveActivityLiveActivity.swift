@@ -57,58 +57,63 @@ struct PostureLiveActivityLiveActivity: Widget {
             DynamicIsland {
                 // Expanded UI for Dynamic Island
                 DynamicIslandExpandedRegion(.leading) {
-                    VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
                         Image(systemName: statusIcon(for: context.state.postureStatus))
-                            .font(.title)
+                            .font(.system(size: 26))
                             .foregroundColor(statusColor(for: context.state.postureStatus))
-                        Text(shortStatus(for: context.state.postureStatus))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(shortStatus(for: context.state.postureStatus))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                            Text("Status")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .padding(.leading, 8)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 4) {
+                    VStack(alignment: .trailing, spacing: 6) {
                         HStack(spacing: 4) {
-                            Image(systemName: "arrow.up.and.down")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
                             Text("\(Int(context.state.pitch * 180 / .pi))°")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                            Image(systemName: "arrow.up.down")
                                 .font(.caption)
-                                .fontWeight(.bold)
+                                .foregroundColor(.secondary)
                         }
                         HStack(spacing: 4) {
-                            Image(systemName: "arrow.left.and.right")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
                             Text("\(Int(context.state.roll * 180 / .pi))°")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                            Image(systemName: "arrow.left.right")
                                 .font(.caption)
-                                .fontWeight(.bold)
+                                .foregroundColor(.secondary)
                         }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .padding(.trailing, 8)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    // Empty center region
+                    Text(context.state.postureStatus)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(statusColor(for: context.state.postureStatus))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .padding(.horizontal, 8)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Current Posture")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text(context.state.postureStatus)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(statusColor(for: context.state.postureStatus))
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(postureAdvice(for: context.state.postureStatus))
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.trailing)
-                        }
+                        Text(postureAdvice(for: context.state.postureStatus))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                 }
             } compactLeading: {
                 Image(systemName: compactIcon(for: context.state.postureStatus))
