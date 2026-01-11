@@ -31,6 +31,8 @@
 		8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */; };
 		8CD3D1D32F12DA54000A9C3C /* PostureDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */; };
 		8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */; };
+		8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */; };
+		8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */; };
 		A1000001 /* PostureDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011 /* PostureDetectorApp.swift */; };
 		A1000003 /* PostureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013 /* PostureMonitor.swift */; };
 		A1000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000014 /* Assets.xcassets */; };
@@ -88,6 +90,8 @@
 		8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureHistory.swift; sourceTree = "<group>"; };
 		8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDataStore.swift; sourceTree = "<group>"; };
 		8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Session.swift"; sourceTree = "<group>"; };
+		8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarGridView.swift; sourceTree = "<group>"; };
+		8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
@@ -229,6 +233,8 @@
 		8C9D4F0F2F12658E00DAA24B /* Calendar */ = {
 			isa = PBXGroup;
 			children = (
+				8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */,
+				8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */,
 				8C9D4F112F1265A000DAA24B /* CalendarScreen.swift */,
 			);
 			path = Calendar;
@@ -418,6 +424,8 @@
 				8C9D4F122F1265A500DAA24B /* CalendarScreen.swift in Sources */,
 				8C9D4F072F12626100DAA24B /* SFSymbol.swift in Sources */,
 				A1000007 /* BluetoothMonitor.swift in Sources */,
+				8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */,
+				8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

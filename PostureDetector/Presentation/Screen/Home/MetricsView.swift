@@ -56,10 +56,19 @@ private struct MetricItem: View {
                 .font(.caption)
                 .foregroundColor(.black.opacity(0.8))
 
-            Text(String(format: "%.2f°", value * 180 / .pi))
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.black)
+            if #available(iOS 16.0, *) {
+                Text(String(format: "%.2f°", value * 180 / .pi))
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.black)
+                    .contentTransition(.numericText())
+            } else {
+                Text(String(format: "%.2f°", value * 180 / .pi))
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.black)
+            }
+
         }
         .frame(maxWidth: .infinity)
     }
