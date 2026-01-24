@@ -19,7 +19,11 @@ enum AirPodsConnectionState {
 
 class BluetoothMonitor: NSObject, ObservableObject {
     @Published var connectedDeviceName: String?
+    #if targetEnvironment(simulator)
+    @Published var connectionState: AirPodsConnectionState = .connectedAndActive
+    #else
     @Published var connectionState: AirPodsConnectionState = .disconnected
+    #endif
 
     private var routeChangeObserver: NSObjectProtocol?
     private var checkTimer: Timer?
@@ -31,6 +35,11 @@ class BluetoothMonitor: NSObject, ObservableObject {
     init(postureMonitor: PostureMonitor) {
         self.postureMonitor = postureMonitor
         super.init()
+
+        #if targetEnvironment(simulator)
+        self.connectedDeviceName = "AirPods Pro (Simulator)"
+        #endif
+
         setupAudioSession()
         startMonitoring()
         checkConnection()
@@ -75,6 +84,13 @@ class BluetoothMonitor: NSObject, ObservableObject {
     }
 
     func checkConnection() {
+        #if targetEnvironment(simulator)
+        // Simulator mode - always show as connected
+        connectionState = .connectedAndActive
+        connectedDeviceName = "AirPods Pro (Simulator)"
+        return
+        #endif
+
         // Don't start multiple simultaneous checks
         guard !isTestingConnection else { return }
 

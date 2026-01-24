@@ -20,36 +20,85 @@ struct PostureAttributes: ActivityAttributes {
 struct PostureLiveActivityLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PostureAttributes.self) { context in
-            // Lock screen/banner UI
-            HStack(spacing: 12) {
-                // Monitoring icon
-                Image(systemName: "figure.stand")
-                    .font(.title2)
-                    .foregroundColor(.blue)
+            // Lock screen/banner UI - Better contrast for readability
+            VStack(spacing: 0) {
+                HStack(spacing: 16) {
+                    // Gradient icon with glow effect
+                    ZStack {
+                        // Main circle with gradient
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.blue, Color.cyan],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 50, height: 50)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Posture Monitor")
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        Image(systemName: "figure.stand")
+                            .font(.system(size: 26, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .shadow(color: Color.blue.opacity(0.4), radius: 8, x: 0, y: 2)
 
-                    Text("Monitoring Active")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Posture Monitor")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(.white)
+
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 7, height: 7)
+
+                            Text("Actively Monitoring")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+                    }
+
+                    Spacer()
+
+                    // Timer with modern styling - using relative time
+                    VStack(spacing: 4) {
+                        Text(context.state.startTime, style: .timer)
+                            .font(.system(size: 26, weight: .bold))
+                            .monospacedDigit()
+                            .foregroundColor(.white)
+
+                        Text("elapsed")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
                 }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
 
-                Spacer()
+                // Modern animated progress bar
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        Rectangle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(height: 4)
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(context.state.startTime, style: .timer)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .monospacedDigit()
+                        // Animated gradient bar
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.cyan, Color.blue],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width, height: 4)
+                    }
                 }
-                .foregroundColor(.secondary)
+                .frame(height: 4)
             }
-            .padding()
-            .activityBackgroundTint(Color.blue.opacity(0.15))
-            .activitySystemActionForegroundColor(.blue)
+            .activityBackgroundTint(Color.blue.opacity(0.85))
+            .activitySystemActionForegroundColor(.white)
 
         } dynamicIsland: { context in
             DynamicIsland {

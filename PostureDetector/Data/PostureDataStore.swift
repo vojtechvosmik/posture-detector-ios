@@ -115,4 +115,72 @@ class PostureDataStore: ObservableObject {
             return "0%"
         }
     }
+
+    // MARK: - Debug Helpers
+
+    #if DEBUG
+    /// Fill database with realistic sample data for screenshots
+    func fillWithSampleData() {
+        var sampleHistory: [PostureHistory] = []
+        let calendar = Calendar.current
+
+        // Generate 30 days of data
+        for daysAgo in 0..<30 {
+            guard let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date()) else { continue }
+
+            // Create realistic varying data
+            let baseScore = 70 + Int.random(in: -15...25) // Scores between 55-95
+            let monitoredHours = Double.random(in: 2.0...8.0) // 2-8 hours
+            let totalSeconds = monitoredHours * 3600
+
+            // Good posture percentage varies based on score
+            let goodPercentage = Double(baseScore) / 100.0 + Double.random(in: -0.1...0.1)
+            let goodSeconds = totalSeconds * goodPercentage
+            let badSeconds = totalSeconds - goodSeconds
+
+            // Alert count based on bad posture time
+            let alertCount = Int(badSeconds / 300) + Int.random(in: -2...2) // ~1 alert per 5 min of bad posture
+            let finalAlertCount = max(0, alertCount)
+
+            var history = PostureHistory(date: date)
+            history.updateFromSession(
+                goodSeconds: goodSeconds,
+                badSeconds: badSeconds,
+                alerts: finalAlertCount
+            )
+
+            sampleHistory.append(history)
+        }
+
+        // Save all sample data
+        self.allHistory = sampleHistory
+
+        // Update today's history
+        if let todayData = sampleHistory.first(where: { calendar.isDate($0.date, inSameDayAs: Date()) }) {
+            self.todayHistory = todayData
+        }
+
+        // Update yesterday's history
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()),
+           let yesterdayData = sampleHistory.first(where: { calendar.isDate($0.date, inSameDayAs: yesterday) }) {
+            self.yesterdayHistory = yesterdayData
+        }
+
+        // Encode and save
+        if let encoded = try? JSONEncoder().encode(allHistory) {
+            userDefaults.set(encoded, forKey: historyKey)
+        }
+
+        print("✅ Database filled with 30 days of sample data")
+    }
+
+    /// Clear all data
+    func clearAllData() {
+        allHistory = []
+        todayHistory = PostureHistory(date: Date())
+        yesterdayHistory = nil
+        userDefaults.removeObject(forKey: historyKey)
+        print("🗑️ All data cleared")
+    }
+    #endif
 }

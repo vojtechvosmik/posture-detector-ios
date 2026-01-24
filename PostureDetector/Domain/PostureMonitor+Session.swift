@@ -25,6 +25,11 @@ extension PostureMonitor {
         // Alert tracking
         private var sessionAlertCount = 0
 
+        // Public accessor for alert count
+        var alertCount: Int {
+            return sessionAlertCount
+        }
+
         // Reference to data store
         weak var dataStore: PostureDataStore?
 

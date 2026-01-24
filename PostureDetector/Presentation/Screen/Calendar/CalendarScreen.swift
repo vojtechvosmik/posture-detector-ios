@@ -18,6 +18,8 @@ struct CalendarScreen: View {
     @State private var currentMonth: Date = Date()
     @State private var selectedDate: IdentifiableDate?
     @State private var showDayDetail = false
+    @State private var showStreakCelebration = false
+    @State private var celebrationMessage = ""
 
     private let calendar = Calendar.current
 
@@ -30,22 +32,28 @@ struct CalendarScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Calendar grid
-                CalendarGridView(
-                    month: currentMonth,
-                    history: dataStore.allHistory,
-                    onDayTapped: { date in
-                        selectedDate = IdentifiableDate(date: date)
-                        showDayDetail = true
-                    }
-                )
-                .padding(.horizontal, 20)
+                // Empty state if no data
+                if dataStore.allHistory.filter({ $0.totalMonitoredSeconds > 0 }).isEmpty {
+                    emptyStateView
+                        .padding(.top, 60)
+                } else {
+                    // Calendar grid
+                    CalendarGridView(
+                        month: currentMonth,
+                        history: dataStore.allHistory,
+                        onDayTapped: { date in
+                            selectedDate = IdentifiableDate(date: date)
+                            showDayDetail = true
+                        }
+                    )
+                    .padding(.horizontal, 20)
 
-                // Monthly summary
-                monthlySummaryCard
+                    // Monthly summary
+                    monthlySummaryCard
 
-                // Legend
-                legendCard
+                    // Legend
+                    legendCard
+                }
             }
             .padding(.vertical, 20)
         }
@@ -72,6 +80,86 @@ struct CalendarScreen: View {
                 date: identifiableDate.date,
                 history: dataStore.getHistory(for: identifiableDate.date)
             )
+        }
+        .overlay(alignment: .center) {
+            if showStreakCelebration {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation {
+                                showStreakCelebration = false
+                            }
+                        }
+
+                    VStack(spacing: 20) {
+                        Text("🔥")
+                            .font(.system(size: 80))
+                            .scaleEffect(showStreakCelebration ? 1.0 : 0.5)
+                            .animation(.spring(response: 0.5, dampingFraction: 0.6), value: showStreakCelebration)
+
+                        Text(celebrationMessage)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.center)
+
+                        Button("Awesome!") {
+                            withAnimation {
+                                showStreakCelebration = false
+                            }
+                        }
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(Color.orange)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                    }
+                    .padding(40)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
+                    .cornerRadius(20)
+                    .shadow(radius: 20)
+                    .padding(40)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+        }
+        .onAppear {
+            checkForMilestoneStreak()
+        }
+    }
+
+    private func celebrateStreak(streak: Int) {
+        let message: String
+        if streak >= 365 {
+            message = "Amazing! \(streak) Day Streak!\n🏆 You're a posture champion!"
+        } else if streak >= 100 {
+            message = "Incredible! \(streak) Day Streak!\n💪 Keep up the great work!"
+        } else if streak >= 30 {
+            message = "Fantastic! \(streak) Day Streak!\n🌟 A full month of good posture!"
+        } else if streak >= 7 {
+            message = "Great Job! \(streak) Day Streak!\n🎉 A full week achieved!"
+        } else {
+            return
+        }
+
+        celebrationMessage = message
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            showStreakCelebration = true
+        }
+    }
+
+    private func checkForMilestoneStreak() {
+        let streak = calculateStreak()
+        let lastShownStreak = UserDefaults.standard.integer(forKey: "lastCelebratedStreak")
+
+        // Check if we hit a new milestone
+        let milestones = [7, 14, 30, 60, 100, 365]
+        if let milestone = milestones.first(where: { streak >= $0 && lastShownStreak < $0 }) {
+            // Show celebration for this milestone
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                celebrateStreak(streak: streak)
+                UserDefaults.standard.set(streak, forKey: "lastCelebratedStreak")
+            }
         }
     }
 
@@ -109,6 +197,12 @@ struct CalendarScreen: View {
                     label: "Day Streak",
                     color: .orange
                 )
+                .onTapGesture {
+                    let streak = calculateStreak()
+                    if streak >= 7 {
+                        celebrateStreak(streak: streak)
+                    }
+                }
             }
         }
         .padding(20)
@@ -116,6 +210,52 @@ struct CalendarScreen: View {
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
         .padding(.horizontal, 20)
+    }
+
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 64))
+                .foregroundColor(.gray.opacity(0.5))
+
+            Text("No Posture Data Yet")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.primary)
+
+            Text("Start monitoring your posture to see your progress here")
+                .font(.system(size: 16))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "1.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Connect your AirPods")
+                        .font(.system(size: 14))
+                }
+
+                HStack(spacing: 12) {
+                    Image(systemName: "2.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Go to Overview tab")
+                        .font(.system(size: 14))
+                }
+
+                HStack(spacing: 12) {
+                    Image(systemName: "3.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Press play to start monitoring")
+                        .font(.system(size: 14))
+                }
+            }
+            .padding(20)
+            .background(Color.blue.opacity(0.1))
+            .cornerRadius(16)
+            .padding(.horizontal, 40)
+        }
     }
 
     @ViewBuilder

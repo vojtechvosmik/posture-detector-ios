@@ -20,11 +20,19 @@ struct MoreScreen: View {
                 // Insights Section
                 insightsSection
 
+                // Battery Tip
+                batteryTipSection
+
                 // Help & Info Section
                 helpSection
 
                 // Legal Section
                 legalSection
+
+                #if DEBUG
+                // Debug Section
+                debugSection
+                #endif
 
                 // App Info
                 appInfoSection
@@ -47,6 +55,37 @@ struct MoreScreen: View {
         .sheet(isPresented: $showingPrivacy) {
             PrivacyPolicyView()
         }
+    }
+
+    // MARK: - Battery Tip Section
+
+    @ViewBuilder
+    private var batteryTipSection: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 20))
+                .foregroundColor(.yellow)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Battery Optimization")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                Text("Background monitoring uses more battery. Consider monitoring during work hours only.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .background(Color.yellow.opacity(0.1))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+        )
+        .padding(.horizontal, 20)
     }
 
     // MARK: - Insights Section
@@ -166,6 +205,41 @@ struct MoreScreen: View {
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
     }
+
+    // MARK: - Debug Section
+
+    #if DEBUG
+    @ViewBuilder
+    private var debugSection: some View {
+        VStack(spacing: 12) {
+            SectionHeader(title: "Debug Tools", icon: "hammer.fill")
+
+            VStack(spacing: 0) {
+                SettingsRow(
+                    icon: "photo.fill",
+                    title: "Fill Sample Data",
+                    iconColor: .purple
+                ) {
+                    dataStore.fillWithSampleData()
+                }
+
+                Divider()
+                    .padding(.leading, 52)
+
+                SettingsRow(
+                    icon: "trash.fill",
+                    title: "Clear All Data",
+                    iconColor: .red
+                ) {
+                    dataStore.clearAllData()
+                }
+            }
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        }
+    }
+    #endif
 
     // MARK: - App Info
 
