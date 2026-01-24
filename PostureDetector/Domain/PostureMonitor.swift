@@ -185,7 +185,7 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
         // Fill with a quiet tone (for debugging)
         if let channelData = buffer.floatChannelData {
-            let amplitude: Float = 0.1  // Very quiet
+            let amplitude: Float = 0.02  // Much quieter
             for frame in 0..<Int(frameCount) {
                 let value = amplitude * sin(2.0 * Float.pi * Float(frequency) * Float(frame) / Float(sampleRate))
                 channelData[0][frame] = value
@@ -203,7 +203,7 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
             backgroundAudioPlayer = try AVAudioPlayer(contentsOf: tempURL)
             backgroundAudioPlayer?.delegate = self
             backgroundAudioPlayer?.numberOfLoops = -1  // Loop indefinitely
-            backgroundAudioPlayer?.volume = 0.1  // Quiet but audible for debugging
+            backgroundAudioPlayer?.volume = 0.05  // Very quiet, just enough to keep app alive
             backgroundAudioPlayer?.prepareToPlay()
 
             print("✅ Background audio player created successfully")

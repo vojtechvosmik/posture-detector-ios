@@ -15,7 +15,7 @@ struct MetricsView: View {
         VStack(spacing: 12) {
             Text("Live Metrics")
                 .font(.headline)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, 8)
 
@@ -27,7 +27,6 @@ struct MetricsView: View {
                 )
 
                 Divider()
-                    .background(Color.black.opacity(0.3))
                     .frame(height: 40)
 
                 MetricItem(
@@ -71,11 +70,11 @@ private struct MetricItem: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
 
             Text(label)
                 .font(.caption)
-                .foregroundColor(.black.opacity(0.8))
+                .foregroundColor(.secondary)
 
             // Meter bar
             VStack(spacing: 4) {
@@ -106,13 +105,13 @@ private struct MetricItem: View {
                     Text(String(format: "%.1f°", degrees))
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(.black.opacity(0.7))
+                        .foregroundColor(.secondary)
                         .contentTransition(.numericText())
                 } else {
                     Text(String(format: "%.1f°", degrees))
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(.black.opacity(0.7))
+                        .foregroundColor(.secondary)
                 }
             }
         }

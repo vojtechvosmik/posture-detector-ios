@@ -53,47 +53,64 @@ struct PostureLiveActivityLiveActivity: Widget {
 
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded UI for Dynamic Island
+                // Expanded UI (only shows when user taps the Dynamic Island)
                 DynamicIslandExpandedRegion(.leading) {
                     Image(systemName: "figure.stand")
-                        .font(.system(size: 26))
+                        .font(.system(size: 24))
                         .foregroundColor(.blue)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.startTime, style: .timer)
-                        .font(.body)
-                        .fontWeight(.semibold)
-                        .monospacedDigit()
-                }
-                DynamicIslandExpandedRegion(.center) {
-                    Text("Monitoring Active")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.blue)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(context.state.startTime, style: .timer)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .monospacedDigit()
+                        Text("elapsed")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Posture detection is running")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 4)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Posture Monitoring")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+
+                            Text("Watching your posture")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                 }
             } compactLeading: {
+                // Compact mode - small icon on the left
                 Image(systemName: "figure.stand")
+                    .font(.system(size: 16))
                     .foregroundColor(.blue)
             } compactTrailing: {
+                // Compact mode - timer on the right
                 Text(context.state.startTime, style: .timer)
                     .font(.caption2)
-                    .fontWeight(.bold)
+                    .fontWeight(.semibold)
                     .monospacedDigit()
                     .foregroundColor(.blue)
+                    .frame(width: 42)
             } minimal: {
+                // Minimal mode - single icon when space is limited
                 Image(systemName: "figure.stand")
+                    .font(.system(size: 14))
                     .foregroundColor(.blue)
             }
             .keylineTint(.blue)
-            .contentMargins(.all, 8, for: .expanded)
         }
     }
 }

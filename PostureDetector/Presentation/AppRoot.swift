@@ -58,6 +58,7 @@ struct OnboardingView: View {
     @Binding var isOnboardingComplete: Bool
     @State private var currentPage = 0
     @State private var notificationPermissionGranted = false
+    @State private var isRequestingPermission = false
 
     private let totalPages = 4
 
@@ -94,8 +95,7 @@ struct OnboardingView: View {
                     .tag(2)
 
                     PermissionsPage(
-                        notificationPermissionGranted: $notificationPermissionGranted,
-                        onComplete: completeOnboarding
+                        notificationPermissionGranted: $notificationPermissionGranted
                     )
                     .tag(3)
                 }
@@ -114,8 +114,8 @@ struct OnboardingView: View {
                     }
 
                     // Navigation buttons
-                    if currentPage < totalPages - 1 {
-                        VStack(spacing: 12) {
+                    VStack(spacing: 12) {
+                        if currentPage < totalPages - 1 {
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     currentPage += 1
@@ -143,9 +143,44 @@ struct OnboardingView: View {
                                     .font(.system(size: 15, weight: .medium))
                                     .foregroundColor(.gray)
                             }
+                        } else {
+                            // Last page buttons
+                            Button(action: requestNotificationPermission) {
+                                HStack {
+                                    if isRequestingPermission {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Text(notificationPermissionGranted ? "Get Started" : "Enable Notifications")
+                                            .font(.system(size: 17, weight: .semibold))
+                                    }
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 18)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .cornerRadius(14)
+                            }
+                            .disabled(isRequestingPermission)
+
+                            if !notificationPermissionGranted {
+                                Button(action: {
+                                    completeOnboarding()
+                                }) {
+                                    Text("Skip for Now")
+                                        .font(.system(size: 15, weight: .medium))
+                                        .foregroundColor(.gray)
+                                }
+                            }
                         }
-                        .padding(.horizontal, 32)
                     }
+                    .padding(.horizontal, 32)
                 }
                 .padding(.bottom, 50)
             }
@@ -156,166 +191,10 @@ struct OnboardingView: View {
         isOnboardingComplete = true
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
     }
-}
-
-// MARK: - Illustration Page
-
-struct IllustrationPage: View {
-    let illustration: String
-    let illustrationColor: Color
-    let title: String
-    let description: String
-
-    var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                Spacer()
-
-                // Large illustration area (takes 60% of screen)
-                ZStack {
-                    // Decorative circles
-                    Circle()
-                        .fill(illustrationColor.opacity(0.08))
-                        .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
-
-                    Circle()
-                        .fill(illustrationColor.opacity(0.12))
-                        .frame(width: geometry.size.width * 0.6, height: geometry.size.width * 0.6)
-
-                    // Main illustration
-                    Image(systemName: illustration)
-                        .font(.system(size: geometry.size.width * 0.35, weight: .light))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [illustrationColor, illustrationColor.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-                .frame(height: geometry.size.height * 0.5)
-
-                Spacer()
-
-                // Text content
-                VStack(spacing: 16) {
-                    Text(title)
-                        .font(.system(size: 34, weight: .bold))
-                        .foregroundColor(.black)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.8)
-
-                    Text(description)
-                        .font(.system(size: 17))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.bottom, 80)
-            }
-        }
-    }
-}
-
-// MARK: - Permissions Page
-
-struct PermissionsPage: View {
-    @Binding var notificationPermissionGranted: Bool
-    let onComplete: () -> Void
-
-    @State private var isRequestingPermission = false
-
-    var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                Spacer()
-
-                // Illustration
-                ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.08))
-                        .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
-
-                    Circle()
-                        .fill(Color.orange.opacity(0.12))
-                        .frame(width: geometry.size.width * 0.6, height: geometry.size.width * 0.6)
-
-                    Image(systemName: "bell.badge.fill")
-                        .font(.system(size: geometry.size.width * 0.35, weight: .light))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color.orange, Color.orange.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-                .frame(height: geometry.size.height * 0.4)
-
-                Spacer()
-
-                // Text content
-                VStack(spacing: 16) {
-                    Text("Stay on Track")
-                        .font(.system(size: 34, weight: .bold))
-                        .foregroundColor(.black)
-                        .multilineTextAlignment(.center)
-
-                    Text("Get gentle reminders when your posture needs attention")
-                        .font(.system(size: 17))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
-
-                Spacer()
-
-                // Buttons
-                VStack(spacing: 12) {
-                    Button(action: requestNotificationPermission) {
-                        HStack {
-                            if isRequestingPermission {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Text(notificationPermissionGranted ? "Get Started" : "Enable Notifications")
-                                    .font(.system(size: 17, weight: .semibold))
-                            }
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.blue, Color.blue.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(14)
-                    }
-                    .disabled(isRequestingPermission)
-
-                    if !notificationPermissionGranted {
-                        Button(action: onComplete) {
-                            Text("Skip for Now")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.gray)
-                                .padding(.vertical, 12)
-                        }
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 50)
-            }
-        }
-    }
 
     private func requestNotificationPermission() {
         guard !notificationPermissionGranted else {
-            onComplete()
+            completeOnboarding()
             return
         }
 
@@ -329,11 +208,125 @@ struct PermissionsPage: View {
                 if granted {
                     // Small delay before completing
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        onComplete()
+                        completeOnboarding()
                     }
                 }
             }
         }
     }
+}
+
+// MARK: - Illustration Page
+
+struct IllustrationPage: View {
+    let illustration: String
+    let illustrationColor: Color
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            // Large illustration area (takes 60% of screen)
+            ZStack {
+                // Decorative circles
+                Circle()
+                    .fill(illustrationColor.opacity(0.08))
+                    .frame(width: UIScreen.main.bounds.width * 0.8, height: UIScreen.main.bounds.width * 0.8)
+
+                Circle()
+                    .fill(illustrationColor.opacity(0.12))
+                    .frame(width: UIScreen.main.bounds.width * 0.6, height: UIScreen.main.bounds.width * 0.6)
+
+                // Main illustration
+                Image(systemName: illustration)
+                    .font(.system(size: UIScreen.main.bounds.width * 0.35, weight: .light))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [illustrationColor, illustrationColor.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            Spacer()
+
+            // Text content
+            VStack(spacing: 16) {
+                Text(title)
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundColor(.black)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+
+                Text(description)
+                    .font(.system(size: 17))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.bottom, 80)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Permissions Page
+
+struct PermissionsPage: View {
+    @Binding var notificationPermissionGranted: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            // Illustration
+            ZStack {
+                Circle()
+                    .fill(Color.orange.opacity(0.08))
+                    .frame(width: UIScreen.main.bounds.width * 0.8, height: UIScreen.main.bounds.width * 0.8)
+
+                Circle()
+                    .fill(Color.orange.opacity(0.12))
+                    .frame(width: UIScreen.main.bounds.width * 0.6, height: UIScreen.main.bounds.width * 0.6)
+
+                Image(systemName: "bell.badge.fill")
+                    .font(.system(size: UIScreen.main.bounds.width * 0.35, weight: .light))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.orange, Color.orange.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            Spacer()
+
+            // Text content
+            VStack(spacing: 16) {
+                Text("Stay on Track")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundColor(.black)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+
+                Text("Get gentle reminders when your posture needs attention")
+                    .font(.system(size: 17))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.bottom, 80)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
 }
 

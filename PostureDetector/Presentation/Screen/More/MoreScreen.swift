@@ -32,7 +32,7 @@ struct MoreScreen: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 20)
         }
-        .background(Color.gray.opacity(0.05))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("More")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showingHowToUse) {
@@ -82,7 +82,7 @@ struct MoreScreen: View {
                 )
             }
             .padding()
-            .background(Color.white)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
@@ -128,7 +128,7 @@ struct MoreScreen: View {
                     }
                 }
             }
-            .background(Color.white)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
@@ -161,7 +161,7 @@ struct MoreScreen: View {
                     showingPrivacy = true
                 }
             }
-            .background(Color.white)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
@@ -559,7 +559,7 @@ struct DeviceCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }

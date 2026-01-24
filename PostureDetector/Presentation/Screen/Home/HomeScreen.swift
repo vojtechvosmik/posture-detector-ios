@@ -30,7 +30,7 @@ struct HomeScreen: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .background(.gray.opacity(0.05))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Posture Detector")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -73,7 +73,7 @@ struct HomeScreen: View {
                 )
                 .frame(height: 250)
                 .padding()
-                .background(Color.white.opacity(0.1))
+                .background(Color(uiColor: .secondarySystemGroupedBackground).opacity(0.5))
                 .cornerRadius(20)
                 .blur(radius: postureMonitor.isMonitoring ? 0 : 3)
                 .overlay(alignment: .bottomTrailing) {
@@ -90,7 +90,7 @@ struct HomeScreen: View {
                             .font(.system(size: 24))
                             .foregroundColor(postureMonitor.isMonitoring ? .red : .green)
                             .frame(width: 60, height: 60)
-                            .background(Color.white)
+                            .background(Color(uiColor: .systemBackground))
                             .clipShape(Circle())
                             .shadow(radius: 10)
                     }
@@ -121,7 +121,7 @@ struct HomeScreen: View {
             .animation(.easeInOut(duration: 0.6), value: postureMonitor.postureStatus)
             .opacity(postureMonitor.isMonitoring ? 1 : 0.5)
         )
-        .background(Color.white.opacity(0.4))
+        .background(Color(uiColor: .secondarySystemGroupedBackground).opacity(0.4))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
@@ -131,7 +131,7 @@ struct HomeScreen: View {
             pitch: postureMonitor.pitch,
             roll: postureMonitor.roll
         )
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
@@ -235,7 +235,7 @@ struct HomeScreen: View {
             }
         }
         .padding(20)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
@@ -334,7 +334,7 @@ struct GridCardToggle: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 24)
-            .background(Color.white)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(20)
             .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
         }

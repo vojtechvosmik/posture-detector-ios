@@ -49,7 +49,7 @@ struct CalendarScreen: View {
             }
             .padding(.vertical, 20)
         }
-        .background(Color.gray.opacity(0.05))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle(monthYearTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -112,7 +112,7 @@ struct CalendarScreen: View {
             }
         }
         .padding(20)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
         .padding(.horizontal, 20)
@@ -137,7 +137,7 @@ struct CalendarScreen: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         .padding(.horizontal, 20)
