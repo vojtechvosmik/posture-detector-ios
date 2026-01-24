@@ -10,18 +10,20 @@ import CoreMotion
 import Combine
 import UserNotifications
 import AVFoundation
+import UIKit
+import BackgroundTasks
 
-class PostureMonitor: ObservableObject {
+class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private let motionManager = CMHeadphoneMotionManager()
     let notificationCenter = UNUserNotificationCenter.current()
 
     @Published var isConnected = false {
         didSet {
-            // Update Live Activity when connection state changes
-            if #available(iOS 16.1, *), currentActivity != nil {
-                updateLiveActivity()
+            // Only update if the connection state actually changed
+            guard oldValue != isConnected else { return }
 
-                // Handle disconnection timeout
+            // Handle disconnection timeout
+            if #available(iOS 16.1, *), currentActivity != nil {
                 if !isConnected {
                     startDisconnectionTimer()
                 } else {
@@ -58,6 +60,12 @@ class PostureMonitor: ObservableObject {
     // Audio player for sound feedback
     var audioPlayer: AVAudioPlayer?
 
+    // Background audio player to keep app alive
+    private var backgroundAudioPlayer: AVAudioPlayer?
+
+    // Background task identifier
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+
     // Calibration: Good posture is around pitch 0 and roll 0
     private let targetPitch: Double = 0.0
     private let targetRoll: Double = 0.0
@@ -66,9 +74,142 @@ class PostureMonitor: ObservableObject {
     private let pitchThreshold: Double = 0.20  // ~20 degrees forward/backward
     private let rollThreshold: Double = 0.20   // ~15 degrees sideways
 
-    init() {
+    override init() {
+        super.init()
         checkAvailability()
         requestNotificationPermission()
+        setupBackgroundAudio()
+        setupAudioSessionNotifications()
+    }
+
+    private func setupBackgroundAudio() {
+        do {
+            // Configure audio session for background playback
+            let audioSession = AVAudioSession.sharedInstance()
+
+            // Use .playback category with .mixWithOthers to allow background playback
+            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try audioSession.setActive(true)
+
+            print("✅ Audio session configured successfully")
+
+            // Create a silent audio buffer
+            createSilentAudioPlayer()
+        } catch {
+            print("❌ Failed to setup background audio: \(error)")
+        }
+    }
+
+    private func setupAudioSessionNotifications() {
+        // Handle audio session interruptions
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioSessionInterruption),
+            name: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance()
+        )
+
+        // Handle audio session route changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioSessionRouteChange),
+            name: AVAudioSession.routeChangeNotification,
+            object: AVAudioSession.sharedInstance()
+        )
+    }
+
+    @objc private func handleAudioSessionInterruption(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+
+        switch type {
+        case .began:
+            print("⚠️ Audio session interrupted")
+        case .ended:
+            print("🔄 Audio session interruption ended, resuming playback")
+            if isMonitoring {
+                // Check if we should resume
+                if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt {
+                    let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+                    if options.contains(.shouldResume) {
+                        // Resume audio playback
+                        do {
+                            try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+                            backgroundAudioPlayer?.play()
+                            print("✅ Audio session resumed successfully")
+                        } catch {
+                            print("❌ Failed to resume audio: \(error)")
+                        }
+                    }
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+
+    @objc private func handleAudioSessionRouteChange(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+            return
+        }
+
+        print("🔊 Audio route changed: \(reason.rawValue)")
+
+        // If monitoring, ensure audio keeps playing
+        if isMonitoring && backgroundAudioPlayer?.isPlaying == false {
+            backgroundAudioPlayer?.play()
+        }
+    }
+
+    private func createSilentAudioPlayer() {
+        // Create a very short audio buffer with a quiet tone (0.5 seconds)
+        let sampleRate = 44100.0
+        let duration = 0.5
+        let frameCount = UInt32(sampleRate * duration)
+        let frequency = 440.0  // A4 note for debugging
+
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
+            return
+        }
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            return
+        }
+
+        buffer.frameLength = frameCount
+
+        // Fill with a quiet tone (for debugging)
+        if let channelData = buffer.floatChannelData {
+            let amplitude: Float = 0.1  // Very quiet
+            for frame in 0..<Int(frameCount) {
+                let value = amplitude * sin(2.0 * Float.pi * Float(frequency) * Float(frame) / Float(sampleRate))
+                channelData[0][frame] = value
+            }
+        }
+
+        // Export buffer to a temporary file
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("silence.caf")
+
+        do {
+            let file = try AVAudioFile(forWriting: tempURL, settings: format.settings)
+            try file.write(from: buffer)
+
+            // Create player from the file
+            backgroundAudioPlayer = try AVAudioPlayer(contentsOf: tempURL)
+            backgroundAudioPlayer?.delegate = self
+            backgroundAudioPlayer?.numberOfLoops = -1  // Loop indefinitely
+            backgroundAudioPlayer?.volume = 0.1  // Quiet but audible for debugging
+            backgroundAudioPlayer?.prepareToPlay()
+
+            print("✅ Background audio player created successfully")
+        } catch {
+            print("Failed to create silent audio player: \(error)")
+        }
     }
 
     func setDataStore(_ dataStore: PostureDataStore) {
@@ -83,6 +224,7 @@ class PostureMonitor: ObservableObject {
         errorMessage = nil
     }
 
+
     func startMonitoring() {
         guard motionManager.isDeviceMotionAvailable else {
             errorMessage = "Please connect AirPods Pro or AirPods Max"
@@ -90,6 +232,36 @@ class PostureMonitor: ObservableObject {
         }
 
         isMonitoring = true
+
+        // Start background task to prevent app suspension
+        startBackgroundTask()
+
+        // Ensure audio session is active before starting audio
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            print("✅ Audio session activated")
+        } catch {
+            print("❌ Failed to activate audio session: \(error)")
+        }
+
+        // Start background audio to keep app alive
+        if let player = backgroundAudioPlayer {
+            if player.play() {
+                print("✅ Background audio started playing (volume: \(player.volume))")
+                print("✅ Audio is playing: \(player.isPlaying)")
+            } else {
+                print("❌ Failed to start background audio playback")
+                // Try to recreate the player
+                createSilentAudioPlayer()
+                backgroundAudioPlayer?.play()
+            }
+        } else {
+            print("❌ Background audio player is nil")
+            createSilentAudioPlayer()
+            backgroundAudioPlayer?.play()
+        }
 
         // Start session tracking
         if let dataStore = dataStore {
@@ -107,21 +279,11 @@ class PostureMonitor: ObservableObject {
             if let error = error {
                 self.errorMessage = "Error: \(error.localizedDescription)"
                 self.isConnected = false
-
-                // Update Live Activity to show disconnected state
-                if #available(iOS 16.1, *) {
-                    self.updateLiveActivity()
-                }
                 return
             }
 
             guard let motion = motion else {
                 self.isConnected = false
-
-                // Update Live Activity to show disconnected state
-                if #available(iOS 16.1, *) {
-                    self.updateLiveActivity()
-                }
                 return
             }
 
@@ -167,16 +329,17 @@ class PostureMonitor: ObservableObject {
                 self.cancelBadPostureTimer()
                 self.removePostureNotifications()
             }
-
-            // Update Live Activity
-            if #available(iOS 16.1, *) {
-                self.updateLiveActivity()
-            }
         }
     }
 
     func stopMonitoring() {
         isMonitoring = false
+
+        // Stop background audio
+        backgroundAudioPlayer?.stop()
+
+        // End background task
+        endBackgroundTask()
 
         // End session tracking
         sessionTracker.endSession()
@@ -188,6 +351,24 @@ class PostureMonitor: ObservableObject {
         if #available(iOS 16.1, *) {
             endLiveActivity()
         }
+    }
+
+    private func startBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            // Called when time expires
+            print("⚠️ Background task expired, restarting...")
+            self?.endBackgroundTask()
+            // Restart background task
+            self?.startBackgroundTask()
+        }
+        print("✅ Background task started: \(backgroundTask.rawValue)")
+    }
+
+    private func endBackgroundTask() {
+        guard backgroundTask != .invalid else { return }
+        print("🛑 Ending background task: \(backgroundTask.rawValue)")
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 
     private func startDisconnectionTimer() {
@@ -243,7 +424,23 @@ class PostureMonitor: ObservableObject {
         }
     }
 
+
+    // MARK: - AVAudioPlayerDelegate
+
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        print("⚠️ Background audio finished playing (success: \(flag))")
+        // Restart if still monitoring
+        if isMonitoring && player == backgroundAudioPlayer {
+            player.play()
+        }
+    }
+
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        print("❌ Audio player decode error: \(error?.localizedDescription ?? "unknown")")
+    }
+
     deinit {
+        NotificationCenter.default.removeObserver(self)
         stopMonitoring()
         cancelDisconnectionTimer()
         cancelBadPostureTimer()

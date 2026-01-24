@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>cz.peachdev.postureplus.posture-monitoring</string>
+	</array>
+	<key>NSMotionUsageDescription</key>
+	<string>We use motion data from your AirPods to monitor your head posture and help you maintain good posture throughout the day.</string>
+</dict>
+</plist>

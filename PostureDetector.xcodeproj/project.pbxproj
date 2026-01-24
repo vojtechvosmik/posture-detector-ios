@@ -94,6 +94,8 @@
 		8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarGridView.swift; sourceTree = "<group>"; };
 		8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
 		8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = alert.mp3; sourceTree = "<group>"; };
+		8CD3D1DC2F13D925000A9C3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8CD3D1DD2F13F8B8000A9C3C /* PostureDetector.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PostureDetector.entitlements; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
@@ -264,6 +266,8 @@
 		A1000031 /* PostureDetector */ = {
 			isa = PBXGroup;
 			children = (
+				8CD3D1DD2F13F8B8000A9C3C /* PostureDetector.entitlements */,
+				8CD3D1DC2F13D925000A9C3C /* Info.plist */,
 				8C9D4EF02F122EC900DAA24B /* Presentation */,
 				8C9D4EF12F122ED100DAA24B /* Domain */,
 				8C9D4EF22F122ED800DAA24B /* Data */,
@@ -630,13 +634,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PostureDetector/PostureDetector.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PostureDetector/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PosturePlus;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -649,7 +656,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cz.peachdev.postureplus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -667,13 +674,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PostureDetector/PostureDetector.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PostureDetector/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PosturePlus;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -686,7 +696,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cz.peachdev.postureplus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
