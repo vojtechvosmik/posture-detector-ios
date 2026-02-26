@@ -19,9 +19,8 @@ extension PostureMonitor {
         }
 
         do {
-            // Configure audio session to mix with other audio (doesn't pause Spotify, etc.)
-            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+            // DON'T change the audio session category here - keep .playback for background
+            // The .playback category with .mixWithOthers already allows playing sounds
 
             // Create and retain audio player
             audioPlayer = try AVAudioPlayer(contentsOf: soundURL)

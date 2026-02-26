@@ -89,9 +89,6 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
     // Background audio player to keep app alive
     private var backgroundAudioPlayer: AVAudioPlayer?
 
-    // Background task identifier
-    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-
     // Haptic feedback
     private let hapticLight = UIImpactFeedbackGenerator(style: .light)
     private let hapticMedium = UIImpactFeedbackGenerator(style: .medium)
@@ -229,9 +226,9 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
         buffer.frameLength = frameCount
 
-        // Fill with a quiet tone (for debugging)
+        // Fill with an audible tone (for debugging)
         if let channelData = buffer.floatChannelData {
-            let amplitude: Float = 0.02  // Much quieter
+            let amplitude: Float = 0.3  // Louder for debugging
             for frame in 0..<Int(frameCount) {
                 let value = amplitude * sin(2.0 * Float.pi * Float(frequency) * Float(frame) / Float(sampleRate))
                 channelData[0][frame] = value
@@ -249,7 +246,7 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
             backgroundAudioPlayer = try AVAudioPlayer(contentsOf: tempURL)
             backgroundAudioPlayer?.delegate = self
             backgroundAudioPlayer?.numberOfLoops = -1  // Loop indefinitely
-            backgroundAudioPlayer?.volume = 0.05  // Very quiet, just enough to keep app alive
+            backgroundAudioPlayer?.volume = 0.5  // Louder for debugging (0.0 - 1.0)
             backgroundAudioPlayer?.prepareToPlay()
 
             print("✅ Background audio player created successfully")
@@ -295,14 +292,11 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         hapticMedium.impactOccurred()
         #endif
 
-        // Start background task to prevent app suspension
-        startBackgroundTask()
-
         // Ensure audio session is active before starting audio
         do {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            try audioSession.setActive(true)
             print("✅ Audio session activated")
         } catch {
             print("❌ Failed to activate audio session: \(error)")
@@ -423,9 +417,6 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         // Stop background audio
         backgroundAudioPlayer?.stop()
 
-        // End background task
-        endBackgroundTask()
-
         // End session tracking
         sessionTracker.endSession()
 
@@ -441,24 +432,6 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         if #available(iOS 16.1, *) {
             endLiveActivity()
         }
-    }
-
-    private func startBackgroundTask() {
-        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
-            // Called when time expires
-            print("⚠️ Background task expired, restarting...")
-            self?.endBackgroundTask()
-            // Restart background task
-            self?.startBackgroundTask()
-        }
-        print("✅ Background task started: \(backgroundTask.rawValue)")
-    }
-
-    private func endBackgroundTask() {
-        guard backgroundTask != .invalid else { return }
-        print("🛑 Ending background task: \(backgroundTask.rawValue)")
-        UIApplication.shared.endBackgroundTask(backgroundTask)
-        backgroundTask = .invalid
     }
 
     private func startDisconnectionTimer() {
