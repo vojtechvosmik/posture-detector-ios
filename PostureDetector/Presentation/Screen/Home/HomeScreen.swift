@@ -205,7 +205,17 @@ struct HomeScreen: View {
             }
             .frame(height: 16)
 
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
+                ScoreStatItem(
+                    icon: "clock.fill",
+                    value: dataStore.todayHistory.totalMonitoredDuration,
+                    label: "Total Time",
+                    color: .blue
+                )
+
+                Divider()
+                    .frame(height: 40)
+
                 ScoreStatItem(
                     icon: "checkmark.circle.fill",
                     value: dataStore.todayHistory.goodPostureDuration,

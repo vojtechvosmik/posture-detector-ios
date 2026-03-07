@@ -215,6 +215,35 @@ struct MoreScreen: View {
             SectionHeader(title: "Debug Tools", icon: "hammer.fill")
 
             VStack(spacing: 0) {
+                NavigationLink(destination: DebugLogsScreen()) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.orange.opacity(0.15))
+                                .frame(width: 32, height: 32)
+
+                            Image(systemName: "doc.text.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.orange)
+                        }
+
+                        Text("Debug Logs")
+                            .font(.system(size: 15))
+                            .foregroundColor(.primary)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.gray.opacity(0.5))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+
+                Divider()
+                    .padding(.leading, 52)
+
                 SettingsRow(
                     icon: "photo.fill",
                     title: "Fill Sample Data",

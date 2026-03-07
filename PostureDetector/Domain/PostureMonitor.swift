@@ -13,7 +13,7 @@ import AVFoundation
 import UIKit
 import BackgroundTasks
 
-class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
+class PostureMonitor: NSObject, ObservableObject {
     private let motionManager = CMHeadphoneMotionManager()
     let notificationCenter = UNUserNotificationCenter.current()
 
@@ -78,16 +78,12 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var isSoundEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isSoundEnabled, forKey: "isSoundEnabled")
+            // Update background audio manager
+            backgroundAudio.setSoundEnabled(isSoundEnabled)
         }
     }
-    private var badPostureTimer: Timer?
+    private var badPostureTimer: DispatchSourceTimer?
     private let badPostureNotificationDelay: TimeInterval = 5.0  // 5 seconds
-
-    // Audio player for sound feedback
-    var audioPlayer: AVAudioPlayer?
-
-    // Background audio player to keep app alive
-    private var backgroundAudioPlayer: AVAudioPlayer?
 
     // Haptic feedback
     private let hapticLight = UIImpactFeedbackGenerator(style: .light)
@@ -105,6 +101,17 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var mockPostureState: Int = 0 // 0 = good, 1 = forward lean, 2 = sideways
     #endif
 
+    // Debug logging
+    private let logger = DebugLogger.shared
+    private var loggingTimer: DispatchSourceTimer?
+
+    // Background audio for keep-alive
+    private let backgroundAudio = BackgroundAudioManager.shared
+
+    // Lifecycle observers
+    private var backgroundObserver: NSObjectProtocol?
+    private var foregroundObserver: NSObjectProtocol?
+
     // Calibration: Good posture is around pitch 0 and roll 0
     private let targetPitch: Double = 0.0
     private let targetRoll: Double = 0.0
@@ -121,138 +128,7 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         super.init()
         checkAvailability()
         requestNotificationPermission()
-        setupBackgroundAudio()
-        setupAudioSessionNotifications()
-    }
-
-    private func setupBackgroundAudio() {
-        do {
-            // Configure audio session for background playback
-            let audioSession = AVAudioSession.sharedInstance()
-
-            // Use .playback category with .mixWithOthers to allow background playback
-            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            try audioSession.setActive(true)
-
-            print("✅ Audio session configured successfully")
-
-            // Create a silent audio buffer
-            createSilentAudioPlayer()
-        } catch {
-            print("❌ Failed to setup background audio: \(error)")
-        }
-    }
-
-    private func setupAudioSessionNotifications() {
-        // Handle audio session interruptions
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAudioSessionInterruption),
-            name: AVAudioSession.interruptionNotification,
-            object: AVAudioSession.sharedInstance()
-        )
-
-        // Handle audio session route changes
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAudioSessionRouteChange),
-            name: AVAudioSession.routeChangeNotification,
-            object: AVAudioSession.sharedInstance()
-        )
-    }
-
-    @objc private func handleAudioSessionInterruption(notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
-            return
-        }
-
-        switch type {
-        case .began:
-            print("⚠️ Audio session interrupted")
-        case .ended:
-            print("🔄 Audio session interruption ended, resuming playback")
-            if isMonitoring {
-                // Check if we should resume
-                if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt {
-                    let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-                    if options.contains(.shouldResume) {
-                        // Resume audio playback
-                        do {
-                            try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
-                            backgroundAudioPlayer?.play()
-                            print("✅ Audio session resumed successfully")
-                        } catch {
-                            print("❌ Failed to resume audio: \(error)")
-                        }
-                    }
-                }
-            }
-        @unknown default:
-            break
-        }
-    }
-
-    @objc private func handleAudioSessionRouteChange(notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
-              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
-            return
-        }
-
-        print("🔊 Audio route changed: \(reason.rawValue)")
-
-        // If monitoring, ensure audio keeps playing
-        if isMonitoring && backgroundAudioPlayer?.isPlaying == false {
-            backgroundAudioPlayer?.play()
-        }
-    }
-
-    private func createSilentAudioPlayer() {
-        // Create a very short audio buffer with a quiet tone (0.5 seconds)
-        let sampleRate = 44100.0
-        let duration = 0.5
-        let frameCount = UInt32(sampleRate * duration)
-        let frequency = 440.0  // A4 note for debugging
-
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
-            return
-        }
-
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-            return
-        }
-
-        buffer.frameLength = frameCount
-
-        // Fill with an audible tone (for debugging)
-        if let channelData = buffer.floatChannelData {
-            let amplitude: Float = 0.3  // Louder for debugging
-            for frame in 0..<Int(frameCount) {
-                let value = amplitude * sin(2.0 * Float.pi * Float(frequency) * Float(frame) / Float(sampleRate))
-                channelData[0][frame] = value
-            }
-        }
-
-        // Export buffer to a temporary file
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("silence.caf")
-
-        do {
-            let file = try AVAudioFile(forWriting: tempURL, settings: format.settings)
-            try file.write(from: buffer)
-
-            // Create player from the file
-            backgroundAudioPlayer = try AVAudioPlayer(contentsOf: tempURL)
-            backgroundAudioPlayer?.delegate = self
-            backgroundAudioPlayer?.numberOfLoops = -1  // Loop indefinitely
-            backgroundAudioPlayer?.volume = 0.5  // Louder for debugging (0.0 - 1.0)
-            backgroundAudioPlayer?.prepareToPlay()
-
-            print("✅ Background audio player created successfully")
-        } catch {
-            print("Failed to create silent audio player: \(error)")
-        }
+        setupLifecycleObservers()
     }
 
     func setDataStore(_ dataStore: PostureDataStore) {
@@ -277,6 +153,8 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
 
     func startMonitoring() {
+        logger.log("🟢 Starting monitoring", category: "MONITOR")
+
         #if targetEnvironment(simulator)
         // Simulator mode - start mock data
         isMonitoring = true
@@ -285,6 +163,7 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         #else
         guard motionManager.isDeviceMotionAvailable else {
             errorMessage = "Please connect AirPods Pro or AirPods Max"
+            logger.log("❌ Device motion not available", category: "ERROR")
             return
         }
 
@@ -292,31 +171,22 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         hapticMedium.impactOccurred()
         #endif
 
-        // Ensure audio session is active before starting audio
+        // Start debug logging timer
+        startLoggingTimer()
+
+        // Use silent audio to keep app alive in background
+        backgroundAudio.setSoundEnabled(isSoundEnabled)
+        backgroundAudio.startBackgroundAudio()
+        logger.log("Started silent audio for background keep-alive", category: "BACKGROUND")
+
+        // Setup audio session for alert sounds
         do {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try audioSession.setActive(true)
-            print("✅ Audio session activated")
+            logger.log("Audio session activated", category: "AUDIO")
         } catch {
-            print("❌ Failed to activate audio session: \(error)")
-        }
-
-        // Start background audio to keep app alive
-        if let player = backgroundAudioPlayer {
-            if player.play() {
-                print("✅ Background audio started playing (volume: \(player.volume))")
-                print("✅ Audio is playing: \(player.isPlaying)")
-            } else {
-                print("❌ Failed to start background audio playback")
-                // Try to recreate the player
-                createSilentAudioPlayer()
-                backgroundAudioPlayer?.play()
-            }
-        } else {
-            print("❌ Background audio player is nil")
-            createSilentAudioPlayer()
-            backgroundAudioPlayer?.play()
+            logger.log("Failed to activate audio session: \(error)", category: "ERROR")
         }
 
         // Start session tracking
@@ -395,6 +265,13 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
             // Track posture time
             self.sessionTracker.updatePostureStatus(self.postureStatus)
 
+            // Update background audio based on posture
+            if self.postureStatus == .good {
+                self.backgroundAudio.setPostureState(.good)
+            } else {
+                self.backgroundAudio.setPostureState(.bad)
+            }
+
             // Handle posture status changes
             if previousStatus == .good && self.postureStatus != .good {
                 // Bad posture detected - start 5 second timer
@@ -411,11 +288,17 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
 
     func stopMonitoring() {
+        logger.log("🔴 Stopping monitoring", category: "MONITOR")
+
         isMonitoring = false
         hapticMedium.impactOccurred()
 
-        // Stop background audio
-        backgroundAudioPlayer?.stop()
+        // Stop debug logging timer
+        stopLoggingTimer()
+
+        // Stop silent audio
+        backgroundAudio.stopBackgroundAudio()
+        logger.log("Stopped silent audio", category: "BACKGROUND")
 
         // End session tracking
         sessionTracker.endSession()
@@ -453,16 +336,15 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         // Cancel any existing timer
         cancelBadPostureTimer()
 
-        // Start new timer
-        badPostureTimer = Timer.scheduledTimer(withTimeInterval: badPostureNotificationDelay, repeats: false) { [weak self] _ in
+        // Create DispatchSourceTimer for reliable background execution
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
+        timer.schedule(deadline: .now() + badPostureNotificationDelay)
+        timer.setEventHandler { [weak self] in
             guard let self = self else { return }
 
             // Check if still in bad posture
             if self.postureStatus != .good {
-                // Play sound if enabled
-                if self.isSoundEnabled {
-                    self.playBadPostureSound()
-                }
+                self.logger.log("⚠️ Bad posture detected for 5s - triggering notification", category: "ALERT")
 
                 // Send notification if enabled
                 if self.isNotificationEnabled {
@@ -472,10 +354,12 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 self.sessionTracker.incrementAlertCount()
             }
         }
+        timer.resume()
+        badPostureTimer = timer
     }
 
     private func cancelBadPostureTimer() {
-        badPostureTimer?.invalidate()
+        badPostureTimer?.cancel()
         badPostureTimer = nil
     }
 
@@ -487,20 +371,6 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
         }
     }
 
-
-    // MARK: - AVAudioPlayerDelegate
-
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        print("⚠️ Background audio finished playing (success: \(flag))")
-        // Restart if still monitoring
-        if isMonitoring && player == backgroundAudioPlayer {
-            player.play()
-        }
-    }
-
-    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        print("❌ Audio player decode error: \(error?.localizedDescription ?? "unknown")")
-    }
 
     private func attemptMotionRecovery() {
         guard isMonitoring else { return }
@@ -531,14 +401,201 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
         stopMonitoring()
         cancelDisconnectionTimer()
         cancelBadPostureTimer()
         recoveryTimer?.invalidate()
+        stopLoggingTimer()
+        removeLifecycleObservers()
         #if targetEnvironment(simulator)
         mockMotionTimer?.invalidate()
         #endif
+    }
+
+    // MARK: - Lifecycle Management
+
+    private func setupLifecycleObservers() {
+        // Observe when app enters background
+        backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleDidEnterBackground()
+        }
+
+        // Observe when app enters foreground
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleWillEnterForeground()
+        }
+
+        logger.log("Lifecycle observers set up", category: "LIFECYCLE")
+    }
+
+    private func removeLifecycleObservers() {
+        if let observer = backgroundObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = foregroundObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        logger.log("Lifecycle observers removed", category: "LIFECYCLE")
+    }
+
+    private func handleDidEnterBackground() {
+        logger.log("📱 App entered background (monitoring: \(isMonitoring))", category: "LIFECYCLE")
+
+        if isMonitoring {
+            // Reactivate audio session to ensure it stays active
+            backgroundAudio.reactivateAudioSession()
+
+            #if !targetEnvironment(simulator)
+            // Log motion manager state
+            logger.log("Motion manager active: \(motionManager.isDeviceMotionActive)", category: "LIFECYCLE")
+            #endif
+        }
+    }
+
+    private func handleWillEnterForeground() {
+        logger.log("📱 App entering foreground (monitoring: \(isMonitoring))", category: "LIFECYCLE")
+
+        if isMonitoring {
+            // Reactivate audio session
+            backgroundAudio.reactivateAudioSession()
+
+            #if !targetEnvironment(simulator)
+            // Check if motion updates are still active
+            if !motionManager.isDeviceMotionActive {
+                logger.log("⚠️ Motion updates stopped - restarting", category: "LIFECYCLE")
+                restartMotionUpdates()
+            } else {
+                logger.log("✅ Motion updates still active", category: "LIFECYCLE")
+            }
+            #endif
+
+            // Force check connection status
+            checkAvailability()
+        }
+    }
+
+    private func restartMotionUpdates() {
+        #if !targetEnvironment(simulator)
+        logger.log("🔄 Restarting motion updates", category: "LIFECYCLE")
+
+        // Stop existing updates
+        motionManager.stopDeviceMotionUpdates()
+
+        // Small delay before restarting
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self, self.isMonitoring else { return }
+
+            self.motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
+                guard let self = self else { return }
+
+                if let error = error {
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    self.isConnected = false
+                    self.logger.log("Motion update error: \(error.localizedDescription)", category: "ERROR")
+                    return
+                }
+
+                guard let motion = motion else {
+                    self.isConnected = false
+                    self.logger.log("No motion data received", category: "ERROR")
+                    return
+                }
+
+                // Reset failure count on successful update
+                self.motionUpdateFailureCount = 0
+                self.isConnected = true
+                self.errorMessage = nil
+
+                // Get pitch (forward/backward tilt) and roll (left/right tilt)
+                let currentPitch = motion.attitude.pitch
+                let currentRoll = motion.attitude.roll
+
+                self.pitch = currentPitch
+                self.roll = currentRoll
+
+                // Calculate deviation from target (pitch 0, roll 0)
+                let pitchDeviation = abs(currentPitch - self.targetPitch)
+                let rollDeviation = abs(currentRoll - self.targetRoll)
+
+                // Detect bad posture based on deviation magnitude
+                let isForwardLean = pitchDeviation > self.pitchThreshold
+                let isSidewaysLean = rollDeviation > self.rollThreshold
+
+                let previousStatus = self.postureStatus
+
+                if isForwardLean && isSidewaysLean {
+                    self.postureStatus = .poorPosture
+                } else if isForwardLean {
+                    self.postureStatus = .forwardLean
+                } else if isSidewaysLean {
+                    self.postureStatus = .sidewaysLean
+                } else {
+                    self.postureStatus = .good
+                }
+
+                // Track posture time
+                self.sessionTracker.updatePostureStatus(self.postureStatus)
+
+                // Update background audio based on posture
+                if self.postureStatus == .good {
+                    self.backgroundAudio.setPostureState(.good)
+                } else {
+                    self.backgroundAudio.setPostureState(.bad)
+                }
+
+                // Handle posture status changes
+                if previousStatus == .good && self.postureStatus != .good {
+                    // Bad posture detected - start 5 second timer
+                    self.hapticLight.impactOccurred()
+                    self.startBadPostureTimer()
+                } else if previousStatus != .good && self.postureStatus == .good {
+                    // Posture improved - cancel timer and remove notifications
+                    self.hapticSuccess.notificationOccurred(.success)
+                    self.cancelBadPostureTimer()
+                    self.removePostureNotifications()
+                }
+            }
+
+            self.logger.log("✅ Motion updates restarted", category: "LIFECYCLE")
+        }
+        #endif
+    }
+
+    // MARK: - Debug Logging
+
+    private func startLoggingTimer() {
+        stopLoggingTimer()
+
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
+        timer.schedule(deadline: .now(), repeating: 1.0)
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+
+            let appState = UIApplication.shared.applicationState
+            let stateString = appState == .active ? "FG" : appState == .background ? "BG" : "INACTIVE"
+
+            self.logger.log(
+                "pitch=\(String(format: "%.3f", self.pitch)), roll=\(String(format: "%.3f", self.roll)), status=\(self.postureStatus), state=\(stateString)",
+                category: "POSTURE"
+            )
+        }
+        timer.resume()
+        loggingTimer = timer
+        logger.log("📊 Logging timer started", category: "DEBUG")
+    }
+
+    private func stopLoggingTimer() {
+        loggingTimer?.cancel()
+        loggingTimer = nil
+        logger.log("📊 Logging timer stopped", category: "DEBUG")
     }
 
     // MARK: - Simulator Mock Data
@@ -586,6 +643,13 @@ class PostureMonitor: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
             // Track posture time
             self.sessionTracker.updatePostureStatus(self.postureStatus)
+
+            // Update background audio based on posture
+            if self.postureStatus == .good {
+                self.backgroundAudio.setPostureState(.good)
+            } else {
+                self.backgroundAudio.setPostureState(.bad)
+            }
 
             // Handle posture status changes
             if previousStatus == .good && self.postureStatus != .good {

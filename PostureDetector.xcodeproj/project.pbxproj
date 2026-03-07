@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		25E0349F25B3483E68EA8F4B /* BackgroundAudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */; };
 		8C9D4E9F2F11836900DAA24B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C9D4E9E2F11836900DAA24B /* WidgetKit.framework */; };
 		8C9D4EA12F11836900DAA24B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C9D4EA02F11836900DAA24B /* SwiftUI.framework */; };
 		8C9D4EAE2F11836A00DAA24B /* PostureLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8C9D4E9C2F11836900DAA24B /* PostureLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -23,23 +24,25 @@
 		8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F172F12693E00DAA24B /* ErrorView.swift */; };
 		8C9D4F1A2F126E5600DAA24B /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F192F126E5100DAA24B /* ConnectView.swift */; };
 		8C9D4F1C2F126EEA00DAA24B /* StatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F1B2F126EE700DAA24B /* StatusCard.swift */; };
+		8CBDE6722F5CAB2300307785 /* beep.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CBDE6712F5CAB2300307785 /* beep.mp3 */; };
 		8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C52F128F06000A9C3C /* connected.mp3 */; };
 		8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */; };
 		8CD3D1CB2F12A264000A9C3C /* RoutePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */; };
 		8CD3D1CD2F12A34C000A9C3C /* CurrentAudioOutputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */; };
-		8CD3D1CF2F12A74F000A9C3C /* PostureMonitor+Sound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CE2F12A74F000A9C3C /* PostureMonitor+Sound.swift */; };
 		8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */; };
 		8CD3D1D32F12DA54000A9C3C /* PostureDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */; };
 		8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */; };
 		8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */; };
 		8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */; };
 		8CD3D1DB2F13C19F000A9C3C /* alert.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */; };
+		8E7D6D39B075DC37F32FB1EB /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993D5F9B3908E9DF5450A61C /* DebugLogger.swift */; };
 		A1000001 /* PostureDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011 /* PostureDetectorApp.swift */; };
 		A1000003 /* PostureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013 /* PostureMonitor.swift */; };
 		A1000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000014 /* Assets.xcassets */; };
 		A1000005 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000015 /* Preview Assets.xcassets */; };
 		A1000006 /* PostureVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016 /* PostureVisualizer.swift */; };
 		A1000007 /* BluetoothMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017 /* BluetoothMonitor.swift */; };
+		C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +70,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundAudioManager.swift; sourceTree = "<group>"; };
+		2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DebugLogsScreen.swift; path = Debug/DebugLogsScreen.swift; sourceTree = "<group>"; };
 		8C9D4E9C2F11836900DAA24B /* PostureLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PostureLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C9D4E9E2F11836900DAA24B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		8C9D4EA02F11836900DAA24B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -83,11 +88,11 @@
 		8C9D4F172F12693E00DAA24B /* ErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorView.swift; sourceTree = "<group>"; };
 		8C9D4F192F126E5100DAA24B /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		8C9D4F1B2F126EE700DAA24B /* StatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusCard.swift; sourceTree = "<group>"; };
+		8CBDE6712F5CAB2300307785 /* beep.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = beep.mp3; sourceTree = "<group>"; };
 		8CD3D1C52F128F06000A9C3C /* connected.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = connected.mp3; sourceTree = "<group>"; };
 		8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BluetoothMonitor+Connect.swift"; sourceTree = "<group>"; };
 		8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePickerView.swift; sourceTree = "<group>"; };
 		8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAudioOutputView.swift; sourceTree = "<group>"; };
-		8CD3D1CE2F12A74F000A9C3C /* PostureMonitor+Sound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Sound.swift"; sourceTree = "<group>"; };
 		8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureHistory.swift; sourceTree = "<group>"; };
 		8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDataStore.swift; sourceTree = "<group>"; };
 		8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Session.swift"; sourceTree = "<group>"; };
@@ -96,6 +101,7 @@
 		8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = alert.mp3; sourceTree = "<group>"; };
 		8CD3D1DC2F13D925000A9C3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8CD3D1DD2F13F8B8000A9C3C /* PostureDetector.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PostureDetector.entitlements; sourceTree = "<group>"; };
+		993D5F9B3908E9DF5450A61C /* DebugLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
@@ -106,7 +112,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		8C9D4EB22F11836A00DAA24B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		8C9D4EB22F11836A00DAA24B /* Exceptions for "PostureLiveActivity" folder in "PostureLiveActivityExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -116,7 +122,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8C9D4EA22F11836900DAA24B /* PostureLiveActivity */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (8C9D4EB22F11836A00DAA24B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PostureLiveActivity; sourceTree = "<group>"; };
+		8C9D4EA22F11836900DAA24B /* PostureLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8C9D4EB22F11836A00DAA24B /* Exceptions for "PostureLiveActivity" folder in "PostureLiveActivityExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PostureLiveActivity;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -167,10 +184,11 @@
 				A1000013 /* PostureMonitor.swift */,
 				8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */,
 				8C9D4EFA2F12307A00DAA24B /* PostureMonitor+Notification.swift */,
-				8CD3D1CE2F12A74F000A9C3C /* PostureMonitor+Sound.swift */,
 				8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */,
 				A1000017 /* BluetoothMonitor.swift */,
 				8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */,
+				993D5F9B3908E9DF5450A61C /* DebugLogger.swift */,
+				0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -188,6 +206,7 @@
 		8C9D4EF32F122EF800DAA24B /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8CBDE6712F5CAB2300307785 /* beep.mp3 */,
 				8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */,
 				8CD3D1C52F128F06000A9C3C /* connected.mp3 */,
 				A1000014 /* Assets.xcassets */,
@@ -223,6 +242,7 @@
 				8C9D4F082F1262A500DAA24B /* Home */,
 				8C9D4F0F2F12658E00DAA24B /* Calendar */,
 				8C9D4F102F12659200DAA24B /* More */,
+				BFCE1AE6BE80202DA08D6675 /* Debug */,
 			);
 			path = Screen;
 			sourceTree = "<group>";
@@ -294,6 +314,14 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		BFCE1AE6BE80202DA08D6675 /* Debug */ = {
+			isa = PBXGroup;
+			children = (
+				2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */,
+			);
+			name = Debug;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -313,8 +341,6 @@
 				8C9D4EA22F11836900DAA24B /* PostureLiveActivity */,
 			);
 			name = PostureLiveActivityExtension;
-			packageProductDependencies = (
-			);
 			productName = PostureLiveActivityExtension;
 			productReference = 8C9D4E9C2F11836900DAA24B /* PostureLiveActivityExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -388,6 +414,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000005 /* Preview Assets.xcassets in Resources */,
+				8CBDE6722F5CAB2300307785 /* beep.mp3 in Resources */,
 				8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */,
 				A1000004 /* Assets.xcassets in Resources */,
 				8CD3D1DB2F13C19F000A9C3C /* alert.mp3 in Resources */,
@@ -423,7 +450,6 @@
 				8CD3D1D32F12DA54000A9C3C /* PostureDataStore.swift in Sources */,
 				8C9D4F1C2F126EEA00DAA24B /* StatusCard.swift in Sources */,
 				8C9D4EF62F122F9400DAA24B /* PostureMonitor+ActivityKit.swift in Sources */,
-				8CD3D1CF2F12A74F000A9C3C /* PostureMonitor+Sound.swift in Sources */,
 				8C9D4F0E2F12644B00DAA24B /* View+.swift in Sources */,
 				8C9D4F162F1268F700DAA24B /* MetricsView.swift in Sources */,
 				8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */,
@@ -434,6 +460,9 @@
 				A1000007 /* BluetoothMonitor.swift in Sources */,
 				8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */,
 				8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */,
+				C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */,
+				8E7D6D39B075DC37F32FB1EB /* DebugLogger.swift in Sources */,
+				25E0349F25B3483E68EA8F4B /* BackgroundAudioManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -636,7 +665,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = PostureDetector/PostureDetector.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
@@ -644,7 +673,9 @@
 				INFOPLIST_FILE = PostureDetector/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PosturePlus;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Track your posture monitoring sessions as workouts in the Health app.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Save your posture monitoring sessions to the Health app to track your wellness progress.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "We use motion data from your AirPods to monitor your head posture and help you maintain good posture throughout the day.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -676,7 +707,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = PostureDetector/PostureDetector.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
@@ -684,7 +715,9 @@
 				INFOPLIST_FILE = PostureDetector/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PosturePlus;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs access to your AirPods motion sensors to detect your head position and monitor your posture.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Track your posture monitoring sessions as workouts in the Health app.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Save your posture monitoring sessions to the Health app to track your wellness progress.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "We use motion data from your AirPods to monitor your head posture and help you maintain good posture throughout the day.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

@@ -31,6 +31,11 @@ struct PostureHistory: Codable, Identifiable {
         formatDuration(goodPostureSeconds)
     }
 
+    // Human-readable total monitored duration
+    var totalMonitoredDuration: String {
+        formatDuration(totalMonitoredSeconds)
+    }
+
     // Percentage of bad posture
     var badPosturePercentage: Double {
         guard totalMonitoredSeconds > 0 else { return 0 }
