@@ -34,7 +34,6 @@
 		8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */; };
 		8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */; };
 		8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */; };
-		8CD3D1DB2F13C19F000A9C3C /* alert.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */; };
 		8E7D6D39B075DC37F32FB1EB /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993D5F9B3908E9DF5450A61C /* DebugLogger.swift */; };
 		A1000001 /* PostureDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011 /* PostureDetectorApp.swift */; };
 		A1000003 /* PostureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013 /* PostureMonitor.swift */; };
@@ -42,6 +41,8 @@
 		A1000005 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000015 /* Preview Assets.xcassets */; };
 		A1000006 /* PostureVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016 /* PostureVisualizer.swift */; };
 		A1000007 /* BluetoothMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017 /* BluetoothMonitor.swift */; };
+		A38ADA654DEBF7B5CD7AC03C /* ToggleMonitoringIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */; };
+		BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */; };
 		C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */; };
 /* End PBXBuildFile section */
 
@@ -98,7 +99,6 @@
 		8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Session.swift"; sourceTree = "<group>"; };
 		8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarGridView.swift; sourceTree = "<group>"; };
 		8CD3D1D72F12DF81000A9C3C /* DayDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayDetailView.swift; sourceTree = "<group>"; };
-		8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = alert.mp3; sourceTree = "<group>"; };
 		8CD3D1DC2F13D925000A9C3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8CD3D1DD2F13F8B8000A9C3C /* PostureDetector.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PostureDetector.entitlements; sourceTree = "<group>"; };
 		993D5F9B3908E9DF5450A61C /* DebugLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
@@ -109,6 +109,7 @@
 		A1000015 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A1000016 /* PostureVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureVisualizer.swift; sourceTree = "<group>"; };
 		A1000017 /* BluetoothMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothMonitor.swift; sourceTree = "<group>"; };
+		D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToggleMonitoringIntent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -189,6 +190,7 @@
 				8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */,
 				993D5F9B3908E9DF5450A61C /* DebugLogger.swift */,
 				0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */,
+				D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -207,7 +209,6 @@
 			isa = PBXGroup;
 			children = (
 				8CBDE6712F5CAB2300307785 /* beep.mp3 */,
-				8CD3D1DA2F13C19F000A9C3C /* alert.mp3 */,
 				8CD3D1C52F128F06000A9C3C /* connected.mp3 */,
 				A1000014 /* Assets.xcassets */,
 			);
@@ -417,7 +418,6 @@
 				8CBDE6722F5CAB2300307785 /* beep.mp3 in Resources */,
 				8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */,
 				A1000004 /* Assets.xcassets in Resources */,
-				8CD3D1DB2F13C19F000A9C3C /* alert.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -428,6 +428,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A38ADA654DEBF7B5CD7AC03C /* ToggleMonitoringIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,6 +464,7 @@
 				C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */,
 				8E7D6D39B075DC37F32FB1EB /* DebugLogger.swift in Sources */,
 				25E0349F25B3483E68EA8F4B /* BackgroundAudioManager.swift in Sources */,
+				BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

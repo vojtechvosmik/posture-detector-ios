@@ -63,6 +63,7 @@ class PostureMonitor: NSObject, ObservableObject {
     // Live Activity
     #if canImport(ActivityKit)
     var currentActivity: Any?  // Activity<PostureAttributes> on iOS 16.1+
+    var liveActivityStartTime: Date?
     #endif
 
     // Disconnection timer
@@ -111,6 +112,7 @@ class PostureMonitor: NSObject, ObservableObject {
     // Lifecycle observers
     private var backgroundObserver: NSObjectProtocol?
     private var foregroundObserver: NSObjectProtocol?
+    private var toggleMonitoringObserver: NSObjectProtocol?
 
     // Calibration: Good posture is around pitch 0 and roll 0
     private let targetPitch: Double = 0.0
@@ -195,9 +197,15 @@ class PostureMonitor: NSObject, ObservableObject {
         }
 
         #if !targetEnvironment(simulator)
-        // Start Live Activity
+        // Start or update Live Activity
         if #available(iOS 16.1, *) {
-            startLiveActivity()
+            if currentActivity != nil {
+                // Update existing Live Activity
+                updateLiveActivityState()
+            } else {
+                // Create new Live Activity
+                startLiveActivity()
+            }
         }
 
         // Note: CMHeadphoneMotionManager doesn't support setting update interval
@@ -287,7 +295,7 @@ class PostureMonitor: NSObject, ObservableObject {
         #endif
     }
 
-    func stopMonitoring() {
+    func stopMonitoring(keepLiveActivity: Bool = false) {
         logger.log("🔴 Stopping monitoring", category: "MONITOR")
 
         isMonitoring = false
@@ -309,11 +317,16 @@ class PostureMonitor: NSObject, ObservableObject {
         motionManager.stopDeviceMotionUpdates()
         #endif
 
-        //isConnected = false
         postureStatus = .unknown
 
         if #available(iOS 16.1, *) {
-            endLiveActivity()
+            if keepLiveActivity {
+                // Update state but keep Live Activity alive
+                updateLiveActivityState()
+            } else {
+                // End Live Activity completely
+                endLiveActivity()
+            }
         }
     }
 
@@ -433,7 +446,27 @@ class PostureMonitor: NSObject, ObservableObject {
             self?.handleWillEnterForeground()
         }
 
-        logger.log("Lifecycle observers set up", category: "LIFECYCLE")
+        // Observe toggle monitoring from Live Activity using Darwin notifications
+        let notificationName = "cz.peachdev.postureplus.toggleMonitoring" as CFString
+        let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            observer,
+            { (center, observer, name, object, userInfo) in
+                guard let observer = observer else { return }
+                let monitor = Unmanaged<PostureMonitor>.fromOpaque(observer).takeUnretainedValue()
+
+                DispatchQueue.main.async {
+                    monitor.handleToggleMonitoringFromLiveActivity()
+                }
+            },
+            notificationName,
+            nil,
+            .deliverImmediately
+        )
+
+        logger.log("Lifecycle observers set up (including Darwin notifications)", category: "LIFECYCLE")
     }
 
     private func removeLifecycleObservers() {
@@ -443,7 +476,32 @@ class PostureMonitor: NSObject, ObservableObject {
         if let observer = foregroundObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+
+        // Remove Darwin notification observer
+        let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        CFNotificationCenterRemoveObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            observer,
+            CFNotificationName("cz.peachdev.postureplus.toggleMonitoring" as CFString),
+            nil
+        )
+
         logger.log("Lifecycle observers removed", category: "LIFECYCLE")
+    }
+
+    private func handleToggleMonitoringFromLiveActivity() {
+        logger.log("🔄 Toggle monitoring requested from Live Activity", category: "LIFECYCLE")
+
+        if isMonitoring {
+            // Stop monitoring but keep Live Activity alive
+            stopMonitoring(keepLiveActivity: true)
+        } else {
+            // Start monitoring and update Live Activity
+            startMonitoring()
+            if #available(iOS 16.1, *) {
+                updateLiveActivityState()
+            }
+        }
     }
 
     private func handleDidEnterBackground() {
@@ -606,9 +664,15 @@ class PostureMonitor: NSObject, ObservableObject {
         isConnected = true
         errorMessage = nil
 
-        // Start Live Activity
+        // Start or update Live Activity
         if #available(iOS 16.1, *) {
-            startLiveActivity()
+            if currentActivity != nil {
+                // Update existing Live Activity
+                updateLiveActivityState()
+            } else {
+                // Create new Live Activity
+                startLiveActivity()
+            }
         }
 
         // Update mock data every 2 seconds

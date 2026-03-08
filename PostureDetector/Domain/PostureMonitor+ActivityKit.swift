@@ -17,10 +17,12 @@ public struct PostureAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         public var isMonitoring: Bool
         public var startTime: Date
+        public var pausedElapsedSeconds: TimeInterval?
 
-        public init(isMonitoring: Bool, startTime: Date) {
+        public init(isMonitoring: Bool, startTime: Date, pausedElapsedSeconds: TimeInterval? = nil) {
             self.isMonitoring = isMonitoring
             self.startTime = startTime
+            self.pausedElapsedSeconds = pausedElapsedSeconds
         }
     }
 
@@ -43,9 +45,12 @@ extension PostureMonitor {
             return
         }
 
+        let startTime = Date()
+        liveActivityStartTime = startTime
+
         let initialState = PostureAttributes.ContentState(
             isMonitoring: true,
-            startTime: Date()
+            startTime: startTime
         )
 
         let attributes = PostureAttributes()
@@ -75,6 +80,27 @@ extension PostureMonitor {
         Task {
             await activity.end(dismissalPolicy: .immediate)
             currentActivity = nil
+            liveActivityStartTime = nil
+        }
+    }
+
+    @available(iOS 16.1, *)
+    func updateLiveActivityState() {
+        guard let activity = currentActivity as? Activity<PostureAttributes>,
+              let startTime = liveActivityStartTime else { return }
+
+        // Calculate elapsed time if pausing
+        let elapsed: TimeInterval? = isMonitoring ? nil : Date().timeIntervalSince(startTime)
+
+        let updatedState = PostureAttributes.ContentState(
+            isMonitoring: isMonitoring,
+            startTime: startTime,
+            pausedElapsedSeconds: elapsed
+        )
+
+        Task {
+            await activity.update(using: updatedState)
+            print("✅ Live Activity state updated: monitoring=\(isMonitoring), elapsed=\(elapsed ?? 0)s")
         }
     }
     #endif
