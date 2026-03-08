@@ -7,16 +7,20 @@
 
 import Foundation
 import Combine
+import WidgetKit
 
 class PostureDataStore: ObservableObject {
-    private let userDefaults = UserDefaults.standard
-    private let historyKey = "postureHistory"
+    private let userDefaults = SharedDefaults.sharedUserDefaults
+    private let historyKey = SharedDefaults.postureHistoryKey
 
     @Published var todayHistory: PostureHistory
     @Published var yesterdayHistory: PostureHistory?
     @Published private(set) var allHistory: [PostureHistory]
 
     init() {
+        // One-time migration from standard to shared UserDefaults
+        Self.migrateToSharedDefaultsIfNeeded()
+
         // Load all history from UserDefaults first
         let loadedHistory = Self.loadHistory()
         self.allHistory = loadedHistory
@@ -69,6 +73,9 @@ class PostureDataStore: ObservableObject {
         if let encoded = try? JSONEncoder().encode(allHistory) {
             userDefaults.set(encoded, forKey: historyKey)
         }
+
+        // Notify widget to refresh
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - History Retrieval
@@ -86,11 +93,25 @@ class PostureDataStore: ObservableObject {
     // MARK: - Private Helpers
 
     private static func loadHistory() -> [PostureHistory] {
-        guard let data = UserDefaults.standard.data(forKey: "postureHistory"),
+        guard let data = SharedDefaults.sharedUserDefaults.data(forKey: SharedDefaults.postureHistoryKey),
               let history = try? JSONDecoder().decode([PostureHistory].self, from: data) else {
             return []
         }
         return history
+    }
+
+    /// One-time migration from standard UserDefaults to shared App Group suite
+    private static func migrateToSharedDefaultsIfNeeded() {
+        let standard = UserDefaults.standard
+        let shared = SharedDefaults.sharedUserDefaults
+        let migrationKey = "hasMigratedToAppGroup"
+
+        guard !shared.bool(forKey: migrationKey) else { return }
+
+        if let data = standard.data(forKey: "postureHistory") {
+            shared.set(data, forKey: SharedDefaults.postureHistoryKey)
+        }
+        shared.set(true, forKey: migrationKey)
     }
 
     // MARK: - Computed Properties
@@ -171,6 +192,7 @@ class PostureDataStore: ObservableObject {
             userDefaults.set(encoded, forKey: historyKey)
         }
 
+        WidgetCenter.shared.reloadAllTimelines()
         print("✅ Database filled with 30 days of sample data")
     }
 
@@ -180,6 +202,7 @@ class PostureDataStore: ObservableObject {
         todayHistory = PostureHistory(date: Date())
         yesterdayHistory = nil
         userDefaults.removeObject(forKey: historyKey)
+        WidgetCenter.shared.reloadAllTimelines()
         print("🗑️ All data cleared")
     }
     #endif

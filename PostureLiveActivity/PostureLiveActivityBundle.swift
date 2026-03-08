@@ -12,5 +12,6 @@ import SwiftUI
 struct PostureLiveActivityBundle: WidgetBundle {
     var body: some Widget {
         PostureLiveActivityLiveActivity()
+        PostureSummaryWidget()
     }
 }

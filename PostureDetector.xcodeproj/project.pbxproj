@@ -25,6 +25,7 @@
 		8C9D4F1A2F126E5600DAA24B /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F192F126E5100DAA24B /* ConnectView.swift */; };
 		8C9D4F1C2F126EEA00DAA24B /* StatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F1B2F126EE700DAA24B /* StatusCard.swift */; };
 		8CBDE6722F5CAB2300307785 /* beep.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CBDE6712F5CAB2300307785 /* beep.mp3 */; };
+		8CBDE6B52F5D8A6D00307785 /* SharedDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CBDE6B42F5D8A6D00307785 /* SharedDefaults.swift */; };
 		8CD3D1C62F128F06000A9C3C /* connected.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C52F128F06000A9C3C /* connected.mp3 */; };
 		8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */; };
 		8CD3D1CB2F12A264000A9C3C /* RoutePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */; };
@@ -90,6 +91,7 @@
 		8C9D4F192F126E5100DAA24B /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		8C9D4F1B2F126EE700DAA24B /* StatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusCard.swift; sourceTree = "<group>"; };
 		8CBDE6712F5CAB2300307785 /* beep.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = beep.mp3; sourceTree = "<group>"; };
+		8CBDE6B42F5D8A6D00307785 /* SharedDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDefaults.swift; sourceTree = "<group>"; };
 		8CD3D1C52F128F06000A9C3C /* connected.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = connected.mp3; sourceTree = "<group>"; };
 		8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BluetoothMonitor+Connect.swift"; sourceTree = "<group>"; };
 		8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePickerView.swift; sourceTree = "<group>"; };
@@ -113,7 +115,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		8C9D4EB22F11836A00DAA24B /* Exceptions for "PostureLiveActivity" folder in "PostureLiveActivityExtension" target */ = {
+		8C9D4EB22F11836A00DAA24B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -123,18 +125,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8C9D4EA22F11836900DAA24B /* PostureLiveActivity */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				8C9D4EB22F11836A00DAA24B /* Exceptions for "PostureLiveActivity" folder in "PostureLiveActivityExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = PostureLiveActivity;
-			sourceTree = "<group>";
-		};
+		8C9D4EA22F11836900DAA24B /* PostureLiveActivity */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (8C9D4EB22F11836A00DAA24B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PostureLiveActivity; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -201,6 +192,7 @@
 				8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */,
 				8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */,
 				8C9D4F062F12625F00DAA24B /* SFSymbol.swift */,
+				8CBDE6B42F5D8A6D00307785 /* SharedDefaults.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -456,6 +448,7 @@
 				8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */,
 				8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */,
 				8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */,
+				8CBDE6B52F5D8A6D00307785 /* SharedDefaults.swift in Sources */,
 				8C9D4F122F1265A500DAA24B /* CalendarScreen.swift in Sources */,
 				8C9D4F072F12626100DAA24B /* SFSymbol.swift in Sources */,
 				A1000007 /* BluetoothMonitor.swift in Sources */,
@@ -484,6 +477,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PostureLiveActivity/PostureLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = GF3CDPK63B;
@@ -515,6 +509,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PostureLiveActivity/PostureLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = GF3CDPK63B;
@@ -667,7 +662,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = PostureDetector/PostureDetector.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
@@ -709,7 +704,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = PostureDetector/PostureDetector.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_ASSET_PATHS = "\"PostureDetector/Preview Content\"";
 				DEVELOPMENT_TEAM = GF3CDPK63B;
 				ENABLE_PREVIEWS = YES;
