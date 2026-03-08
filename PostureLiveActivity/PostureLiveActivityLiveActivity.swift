@@ -71,19 +71,17 @@ struct PostureLiveActivityLiveActivity: Widget {
                                     .font(.system(size: 26, weight: .bold))
                                     .monospacedDigit()
                                     .foregroundColor(.white)
-                                    .background(.red)
-                                    .frame(alignment: .trailing)
-                                    .multilineTextAlignment(.trailing)
+                                    .minimumScaleFactor(0.6)
                                     .lineLimit(1)
                                     .truncationMode(.tail)
-                                    .minimumScaleFactor(0.6)
+                                    .frame(alignment: .trailing)
+                                    .multilineTextAlignment(.trailing)
                             } else if let elapsed = context.state.pausedElapsedSeconds {
                                 // Static elapsed time when paused
                                 Text(formatElapsedTime(elapsed))
                                     .font(.system(size: 26, weight: .bold))
                                     .monospacedDigit()
                                     .foregroundColor(.white.opacity(0.8))
-                                    .background(.yellow)
                             }
 
                             Text("elapsed")

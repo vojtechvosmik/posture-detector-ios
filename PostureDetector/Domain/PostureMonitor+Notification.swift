@@ -11,6 +11,7 @@ extension PostureMonitor {
 
     // Notification identifier for bad posture alerts
     private static let badPostureNotificationID = "bad-posture-alert"
+    private static let airpodsDisconnectedNotificationID = "airpods-disconnected"
 
     func requestNotificationPermission() {
         notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -45,5 +46,24 @@ extension PostureMonitor {
 
         // Remove pending notifications
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [Self.badPostureNotificationID])
+    }
+
+    func sendAirPodsDisconnectedNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "AirPods Disconnected"
+        content.body = "Your AirPods were disconnected. Monitoring has been paused."
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: Self.airpodsDisconnectedNotificationID,
+            content: content,
+            trigger: nil  // Immediate notification
+        )
+
+        notificationCenter.add(request) { error in
+            if let error = error {
+                print("[PostureMonitor] Failed to send AirPods disconnection notification: \(error)")
+            }
+        }
     }
 }

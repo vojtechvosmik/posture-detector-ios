@@ -23,14 +23,7 @@ class PostureMonitor: NSObject, ObservableObject {
             // Only update if the connection state actually changed
             guard oldValue != isConnected else { return }
 
-            // Handle disconnection timeout
-            if #available(iOS 16.1, *), currentActivity != nil {
-                if !isConnected {
-                    startDisconnectionTimer()
-                } else {
-                    cancelDisconnectionTimer()
-                }
-            }
+            handleConnectionStateChange()
         }
     }
     #else
@@ -39,14 +32,7 @@ class PostureMonitor: NSObject, ObservableObject {
             // Only update if the connection state actually changed
             guard oldValue != isConnected else { return }
 
-            // Handle disconnection timeout
-            if #available(iOS 16.1, *), currentActivity != nil {
-                if !isConnected {
-                    startDisconnectionTimer()
-                } else {
-                    cancelDisconnectionTimer()
-                }
-            }
+            handleConnectionStateChange()
         }
     }
     #endif
@@ -327,6 +313,31 @@ class PostureMonitor: NSObject, ObservableObject {
                 // End Live Activity completely
                 endLiveActivity()
             }
+        }
+    }
+
+    private func handleConnectionStateChange() {
+        if !isConnected {
+            // AirPods disconnected
+            logger.log("🎧 AirPods disconnected", category: "CONNECTION")
+
+            // Pause monitoring if currently running
+            if isMonitoring {
+                stopMonitoring(keepLiveActivity: true)
+                logger.log("⏸️ Monitoring paused due to AirPods disconnection", category: "CONNECTION")
+
+                // Send notification
+                sendAirPodsDisconnectedNotification()
+            }
+
+            // Start timer to end Live Activity after 60s if not reconnected
+            if #available(iOS 16.1, *), currentActivity != nil {
+                startDisconnectionTimer()
+            }
+        } else {
+            // AirPods reconnected
+            logger.log("🎧 AirPods reconnected", category: "CONNECTION")
+            cancelDisconnectionTimer()
         }
     }
 
