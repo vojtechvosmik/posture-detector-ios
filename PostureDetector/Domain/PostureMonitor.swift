@@ -290,6 +290,12 @@ class PostureMonitor: NSObject, ObservableObject {
         // Stop debug logging timer
         stopLoggingTimer()
 
+        // Cancel any pending bad posture timer
+        cancelBadPostureTimer()
+
+        // Remove any pending bad posture notifications
+        removePostureNotifications()
+
         // Stop silent audio
         backgroundAudio.stopBackgroundAudio()
         logger.log("Stopped silent audio", category: "BACKGROUND")
