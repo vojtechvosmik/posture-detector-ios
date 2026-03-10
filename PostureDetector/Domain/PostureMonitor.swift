@@ -69,6 +69,13 @@ class PostureMonitor: NSObject, ObservableObject {
             backgroundAudio.setSoundEnabled(isSoundEnabled)
         }
     }
+    @Published var soundAlertDelay: TimeInterval {
+        didSet {
+            UserDefaults.standard.set(soundAlertDelay, forKey: "soundAlertDelay")
+            // Update background audio manager
+            backgroundAudio.setAlertDelay(soundAlertDelay)
+        }
+    }
     private var badPostureTimer: DispatchSourceTimer?
     private let badPostureNotificationDelay: TimeInterval = 5.0  // 5 seconds
 
@@ -104,14 +111,50 @@ class PostureMonitor: NSObject, ObservableObject {
     private let targetPitch: Double = 0.0
     private let targetRoll: Double = 0.0
 
-    // Thresholds for bad posture detection (in radians)
-    private let pitchThreshold: Double = 0.20  // ~20 degrees forward/backward
-    private let rollThreshold: Double = 0.20   // ~15 degrees sideways
+    // Sensitivity settings
+    enum Sensitivity: Int, CaseIterable {
+        case low = 0
+        case medium = 1
+        case high = 2
+
+        var pitchThreshold: Double {
+            switch self {
+            case .low: return 0.50     // ~17 degrees - less sensitive
+            case .medium: return 0.30  // ~11 degrees - balanced
+            case .high: return 0.20    // ~9 degrees - more sensitive
+            }
+        }
+
+        var rollThreshold: Double {
+            switch self {
+            case .low: return 0.50     // ~17 degrees - less sensitive
+            case .medium: return 0.30  // ~11 degrees - balanced
+            case .high: return 0.20    // ~9 degrees - more sensitive
+            }
+        }
+
+        var displayName: String {
+            switch self {
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            }
+        }
+    }
+
+    @Published var sensitivity: Sensitivity {
+        didSet {
+            UserDefaults.standard.set(sensitivity.rawValue, forKey: "sensitivity")
+        }
+    }
 
     override init() {
         // Load saved preferences
         self.isNotificationEnabled = UserDefaults.standard.object(forKey: "isNotificationEnabled") as? Bool ?? true
         self.isSoundEnabled = UserDefaults.standard.object(forKey: "isSoundEnabled") as? Bool ?? true
+        self.soundAlertDelay = UserDefaults.standard.object(forKey: "soundAlertDelay") as? TimeInterval ?? 1.0
+        let sensitivityRaw = UserDefaults.standard.object(forKey: "sensitivity") as? Int ?? Sensitivity.medium.rawValue
+        self.sensitivity = Sensitivity(rawValue: sensitivityRaw) ?? .medium
 
         super.init()
         checkAvailability()
@@ -164,6 +207,7 @@ class PostureMonitor: NSObject, ObservableObject {
 
         // Use silent audio to keep app alive in background
         backgroundAudio.setSoundEnabled(isSoundEnabled)
+        backgroundAudio.setAlertDelay(soundAlertDelay)
         backgroundAudio.startBackgroundAudio()
         logger.log("Started silent audio for background keep-alive", category: "BACKGROUND")
 
@@ -240,9 +284,9 @@ class PostureMonitor: NSObject, ObservableObject {
             let pitchDeviation = abs(currentPitch - self.targetPitch)
             let rollDeviation = abs(currentRoll - self.targetRoll)
 
-            // Detect bad posture based on deviation magnitude
-            let isForwardLean = pitchDeviation > self.pitchThreshold
-            let isSidewaysLean = rollDeviation > self.rollThreshold
+            // Detect bad posture based on deviation magnitude and sensitivity
+            let isForwardLean = pitchDeviation > self.sensitivity.pitchThreshold
+            let isSidewaysLean = rollDeviation > self.sensitivity.rollThreshold
 
             let previousStatus = self.postureStatus
 
@@ -600,9 +644,9 @@ class PostureMonitor: NSObject, ObservableObject {
                 let pitchDeviation = abs(currentPitch - self.targetPitch)
                 let rollDeviation = abs(currentRoll - self.targetRoll)
 
-                // Detect bad posture based on deviation magnitude
-                let isForwardLean = pitchDeviation > self.pitchThreshold
-                let isSidewaysLean = rollDeviation > self.rollThreshold
+                // Detect bad posture based on deviation magnitude and sensitivity
+                let isForwardLean = pitchDeviation > self.sensitivity.pitchThreshold
+                let isSidewaysLean = rollDeviation > self.sensitivity.rollThreshold
 
                 let previousStatus = self.postureStatus
 

@@ -19,6 +19,7 @@ class BackgroundAudioManager: NSObject, ObservableObject {
 
     @Published var currentPostureState: PostureState = .good
     @Published var isSoundEnabled: Bool = true
+    @Published var alertDelay: TimeInterval = 5.0
 
     enum PostureState {
         case good
@@ -119,14 +120,14 @@ class BackgroundAudioManager: NSObject, ObservableObject {
             goodPosturePlayer = try AVAudioPlayer(contentsOf: goodAudioURL)
             goodPosturePlayer?.delegate = self
             goodPosturePlayer?.numberOfLoops = -1
-            goodPosturePlayer?.volume = 0.3 // DEBUG: Audible for testing
+            goodPosturePlayer?.volume = 0.01 // DEBUG: Audible for testing
             goodPosturePlayer?.prepareToPlay()
 
             // Create beep player (layered on top during bad posture)
             beepPlayer = try AVAudioPlayer(contentsOf: beepURL)
             beepPlayer?.delegate = self
             beepPlayer?.numberOfLoops = 0 // Play once per trigger
-            beepPlayer?.volume = 0.5 // Louder than background tone
+            beepPlayer?.volume = 0.85 // Louder than background tone
             beepPlayer?.prepareToPlay()
 
             // Start continuous tone (never stops)
@@ -186,10 +187,21 @@ class BackgroundAudioManager: NSObject, ObservableObject {
         }
     }
 
+    func setAlertDelay(_ delay: TimeInterval) {
+        alertDelay = delay
+        logger.log("Sound alert delay set to \(delay)s", category: "AUDIO")
+
+        // If we're currently in bad posture and beeping, restart the timer with new delay
+        if currentPostureState == .bad && isSoundEnabled {
+            startBeepTimer()
+            logger.log("Restarted beep timer with new delay", category: "AUDIO")
+        }
+    }
+
     private func startBeepTimer() {
         stopBeepTimer()
 
-        // Schedule first beep after 1 second delay
+        // Schedule first beep after configured delay
         let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             self.beepPlayer?.currentTime = 0
@@ -204,9 +216,9 @@ class BackgroundAudioManager: NSObject, ObservableObject {
         }
 
         initialBeepWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + alertDelay, execute: workItem)
 
-        logger.log("Started beep timer (1s initial delay, then 2s interval)", category: "AUDIO")
+        logger.log("Started beep timer (\(alertDelay)s initial delay, then 2s interval)", category: "AUDIO")
     }
 
     private func stopBeepTimer() {

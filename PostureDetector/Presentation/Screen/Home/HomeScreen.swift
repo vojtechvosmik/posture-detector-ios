@@ -26,6 +26,8 @@ struct HomeScreen: View {
                 scoreMeterCard
                 metricsCard
                 settingsCard
+                sensitivityCard
+                alertDelayCard
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
@@ -152,6 +154,132 @@ struct HomeScreen: View {
                 activeColors: [Color.blue, Color.blue.opacity(0.7)]
             )
         }
+    }
+
+    @ViewBuilder private var sensitivityCard: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.green)
+
+                        Text("Sensitivity")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+
+                    Text("How easily bad posture is detected")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                Text(postureMonitor.sensitivity.displayName)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.green)
+            }
+
+            HStack(spacing: 12) {
+                ForEach(PostureMonitor.Sensitivity.allCases, id: \.rawValue) { level in
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            postureMonitor.sensitivity = level
+                        }
+                    }) {
+                        Text(level.displayName)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(postureMonitor.sensitivity == level ? .white : .green)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                postureMonitor.sensitivity == level ?
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.green, Color.green.opacity(0.7)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ) :
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                            )
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    @ViewBuilder private var alertDelayCard: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "timer")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.orange)
+
+                        Text("Alert Delay")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+
+                    Text("Delay before sound alerts start")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                Text("\(Int(postureMonitor.soundAlertDelay))s")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.orange)
+            }
+
+            HStack(spacing: 12) {
+                ForEach([1, 5, 10, 15, 30, 60], id: \.self) { seconds in
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            postureMonitor.soundAlertDelay = TimeInterval(seconds)
+                        }
+                    }) {
+                        Text("\(seconds)s")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(postureMonitor.soundAlertDelay == TimeInterval(seconds) ? .white : .orange)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(
+                                postureMonitor.soundAlertDelay == TimeInterval(seconds) ?
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.orange, Color.orange.opacity(0.7)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ) :
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                            )
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
 
     @ViewBuilder private var scoreMeterCard: some View {
