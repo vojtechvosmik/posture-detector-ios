@@ -149,9 +149,20 @@ class PostureDataStore: ObservableObject {
         for daysAgo in 0..<30 {
             guard let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date()) else { continue }
 
-            // Create realistic varying data
-            let baseScore = 70 + Int.random(in: -15...25) // Scores between 55-95
-            let monitoredHours = Double.random(in: 2.0...8.0) // 2-8 hours
+            // Today gets positive values, past days get random data
+            let baseScore: Int
+            let monitoredHours: Double
+
+            if daysAgo == 0 {
+                // Today: good positive values
+                baseScore = Int.random(in: 85...95) // High score
+                monitoredHours = Double.random(in: 4.0...6.0) // Decent monitoring time
+            } else {
+                // Past days: realistic varying data
+                baseScore = 70 + Int.random(in: -15...25) // Scores between 55-95
+                monitoredHours = Double.random(in: 2.0...8.0) // 2-8 hours
+            }
+
             let totalSeconds = monitoredHours * 3600
 
             // Good posture percentage varies based on score

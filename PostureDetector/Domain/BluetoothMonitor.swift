@@ -15,6 +15,17 @@ enum AirPodsConnectionState {
     case disconnected              // No AirPods detected
     case connectedElsewhere       // AirPods present but connected to another device
     case connectedAndActive       // AirPods connected and providing motion data
+
+    var message: String {
+        switch self {
+        case .disconnected:
+            return "Make sure your AirPods are connected to this device"
+        case .connectedElsewhere:
+            return "AirPods detected but connected to another device"
+        case .connectedAndActive:
+            return "AirPods connected and ready!"
+        }
+    }
 }
 
 class BluetoothMonitor: NSObject, ObservableObject {
