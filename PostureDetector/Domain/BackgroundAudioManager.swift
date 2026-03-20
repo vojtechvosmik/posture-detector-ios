@@ -127,7 +127,7 @@ class BackgroundAudioManager: NSObject, ObservableObject {
             beepPlayer = try AVAudioPlayer(contentsOf: beepURL)
             beepPlayer?.delegate = self
             beepPlayer?.numberOfLoops = 0 // Play once per trigger
-            beepPlayer?.volume = 0.85 // Louder than background tone
+            beepPlayer?.volume = 1.0 // Default max volume
             beepPlayer?.prepareToPlay()
 
             // Start continuous tone (never stops)
@@ -196,6 +196,11 @@ class BackgroundAudioManager: NSObject, ObservableObject {
             startBeepTimer()
             logger.log("Restarted beep timer with new delay", category: "AUDIO")
         }
+    }
+
+    func setBeepVolume(_ volume: Float) {
+        beepPlayer?.volume = volume
+        logger.log("Beep volume set to \(String(format: "%.2f", volume))", category: "AUDIO")
     }
 
     private func startBeepTimer() {

@@ -28,12 +28,13 @@ struct HomeScreen: View {
                 settingsCard
                 sensitivityCard
                 alertDelayCard
+                volumeCard
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
         .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle("Posture Detector")
+        .navigationTitle("Postura")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             postureMonitor.setDataStore(dataStore)
@@ -261,6 +262,69 @@ struct HomeScreen: View {
                                 postureMonitor.soundAlertDelay == TimeInterval(seconds) ?
                                     LinearGradient(
                                         gradient: Gradient(colors: [Color.orange, Color.orange.opacity(0.7)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ) :
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                            )
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    @ViewBuilder private var volumeCard: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "speaker.wave.3.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.purple)
+
+                        Text("Alert Volume")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+
+                    Text("Volume of the beep alert sound")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                Text("\(Int(postureMonitor.beepVolume * 100))%")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.purple)
+            }
+
+            HStack(spacing: 12) {
+                ForEach([0.25, 0.5, 0.75, 1.0], id: \.self) { volume in
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            postureMonitor.beepVolume = Float(volume)
+                        }
+                    }) {
+                        Text("\(Int(volume * 100))%")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(postureMonitor.beepVolume == Float(volume) ? .white : .purple)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(
+                                postureMonitor.beepVolume == Float(volume) ?
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.purple, Color.purple.opacity(0.7)]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ) :

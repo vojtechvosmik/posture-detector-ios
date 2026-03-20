@@ -392,6 +392,7 @@ struct SettingsRow: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
     }

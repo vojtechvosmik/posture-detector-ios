@@ -76,6 +76,13 @@ class PostureMonitor: NSObject, ObservableObject {
             backgroundAudio.setAlertDelay(soundAlertDelay)
         }
     }
+    @Published var beepVolume: Float {
+        didSet {
+            UserDefaults.standard.set(beepVolume, forKey: "beepVolume")
+            // Update background audio manager
+            backgroundAudio.setBeepVolume(beepVolume)
+        }
+    }
     private var badPostureTimer: DispatchSourceTimer?
     private let badPostureNotificationDelay: TimeInterval = 5.0  // 5 seconds
 
@@ -153,6 +160,7 @@ class PostureMonitor: NSObject, ObservableObject {
         self.isNotificationEnabled = UserDefaults.standard.object(forKey: "isNotificationEnabled") as? Bool ?? true
         self.isSoundEnabled = UserDefaults.standard.object(forKey: "isSoundEnabled") as? Bool ?? true
         self.soundAlertDelay = UserDefaults.standard.object(forKey: "soundAlertDelay") as? TimeInterval ?? 1.0
+        self.beepVolume = UserDefaults.standard.object(forKey: "beepVolume") as? Float ?? 1.0
         let sensitivityRaw = UserDefaults.standard.object(forKey: "sensitivity") as? Int ?? Sensitivity.medium.rawValue
         self.sensitivity = Sensitivity(rawValue: sensitivityRaw) ?? .medium
 
@@ -208,6 +216,7 @@ class PostureMonitor: NSObject, ObservableObject {
         // Use silent audio to keep app alive in background
         backgroundAudio.setSoundEnabled(isSoundEnabled)
         backgroundAudio.setAlertDelay(soundAlertDelay)
+        backgroundAudio.setBeepVolume(beepVolume)
         backgroundAudio.startBackgroundAudio()
         logger.log("Started silent audio for background keep-alive", category: "BACKGROUND")
 
