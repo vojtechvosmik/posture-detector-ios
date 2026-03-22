@@ -12,6 +12,7 @@ struct HomeScreen: View {
     @StateObject private var bluetoothMonitor: BluetoothMonitor
     @StateObject private var dataStore = PostureDataStore()
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isFullscreen = false
 
     init() {
         let monitor = PostureMonitor()
@@ -43,6 +44,14 @@ struct HomeScreen: View {
             if newPhase == .background || newPhase == .inactive {
                 postureMonitor.endLiveActivityIfNotMonitoring()
             }
+        }
+        .fullScreenCover(isPresented: $isFullscreen) {
+            FullscreenVisualizerView(
+                pitch: postureMonitor.pitch,
+                roll: postureMonitor.roll,
+                postureStatus: postureMonitor.postureStatus,
+                isPresented: $isFullscreen
+            )
         }
     }
 
@@ -101,6 +110,21 @@ struct HomeScreen: View {
                 }
                 .overlay(alignment: .bottomLeading) {
                     CurrentAudioOutputView().padding(16)
+                }
+                .overlay(alignment: .topTrailing) {
+                    if postureMonitor.isMonitoring {
+                        Button(action: {
+                            isFullscreen = true
+                        }) {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white.opacity(0.7))
+                                .frame(width: 44, height: 44)
+                                .background(Color.black.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                        .padding(16)
+                    }
                 }
                 .transition(.asymmetric(
                     insertion: .scale(scale: 0.9).combined(with: .opacity),
@@ -541,6 +565,53 @@ struct GridCardToggle: View {
             .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct FullscreenVisualizerView: View {
+    let pitch: Double
+    let roll: Double
+    let postureStatus: PostureStatus
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                gradient: Gradient(colors: postureStatus.backgroundColors),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            .animation(.easeInOut(duration: 0.6), value: postureStatus)
+
+            // Visualizer
+            PostureVisualizer(
+                pitch: pitch,
+                roll: roll,
+                postureStatus: postureStatus
+            )
+            .padding(40)
+
+            // Close button
+            VStack {
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black.opacity(0.3))
+                            .clipShape(Circle())
+                    }
+                    .padding(30)
+                }
+                Spacer()
+            }
+        }
     }
 }
 
