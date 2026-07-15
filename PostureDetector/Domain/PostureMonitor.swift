@@ -13,6 +13,71 @@ import AVFoundation
 import UIKit
 import BackgroundTasks
 
+// MARK: - Posture Mode
+
+/// A usage context the user (or auto-detection) picks. Each mode bundles the
+/// detection strictness, how long bad posture must persist before alerting, and
+/// the sound-alert delay — so the user chooses *what they're doing* instead of
+/// an abstract "sensitivity" number.
+enum PostureMode: Int, CaseIterable, Identifiable {
+    case desk = 0       // sitting at a computer — strict, quick correction
+    case relaxed = 1    // couch / reading — lenient, fewer nags
+    case active = 2     // walking / on the go — ignores head sway, catches text-neck
+    case custom = 3     // power users dial in their own numbers
+
+    var id: Int { rawValue }
+
+    /// The three presets offered as choices (Custom is configured, not "picked").
+    static var presets: [PostureMode] { [.desk, .relaxed, .active] }
+
+    var displayName: String {
+        switch self {
+        case .desk: return "Desk"
+        case .relaxed: return "Relaxed"
+        case .active: return "Active"
+        case .custom: return "Custom"
+        }
+    }
+
+    var shortDescription: String {
+        switch self {
+        case .desk: return "Precise correction while working at a computer."
+        case .relaxed: return "Easygoing — for the couch, reading or watching TV."
+        case .active: return "Ignores natural head movement while you walk."
+        case .custom: return "Set your own detection thresholds."
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .desk: return "desktopcomputer"
+        case .relaxed: return "book.fill"
+        case .active: return "figure.walk"
+        case .custom: return "slider.horizontal.3"
+        }
+    }
+
+    /// Fixed parameters for the presets. `custom` returns nil — its parameters
+    /// live on the monitor because the user edits them.
+    var presetParameters: PostureModeParameters? {
+        switch self {
+        case .desk:    return PostureModeParameters(pitchThreshold: 0.24, rollThreshold: 0.24, monitorsRoll: true,  graceDuration: 5,  alertDelay: 5)
+        case .relaxed: return PostureModeParameters(pitchThreshold: 0.34, rollThreshold: 0.36, monitorsRoll: true,  graceDuration: 10, alertDelay: 10)
+        case .active:  return PostureModeParameters(pitchThreshold: 0.50, rollThreshold: 0.60, monitorsRoll: false, graceDuration: 20, alertDelay: 30)
+        case .custom:  return nil
+        }
+    }
+}
+
+/// The concrete knobs a mode resolves to. Detection reads these, never the mode.
+struct PostureModeParameters {
+    var pitchThreshold: Double        // forward-lean threshold (radians from neutral)
+    var rollThreshold: Double         // sideways-lean threshold (radians from neutral)
+    var monitorsRoll: Bool            // Active disables roll — side sway while walking is noise
+    var graceDuration: TimeInterval   // how long bad posture must persist before notifying
+    var alertDelay: TimeInterval      // delay before the sound alert starts
+}
+
 class PostureMonitor: NSObject, ObservableObject {
     private let motionManager = CMHeadphoneMotionManager()
     let notificationCenter = UNUserNotificationCenter.current()
@@ -69,13 +134,6 @@ class PostureMonitor: NSObject, ObservableObject {
             backgroundAudio.setSoundEnabled(isSoundEnabled)
         }
     }
-    @Published var soundAlertDelay: TimeInterval {
-        didSet {
-            UserDefaults.standard.set(soundAlertDelay, forKey: "soundAlertDelay")
-            // Update background audio manager
-            backgroundAudio.setAlertDelay(soundAlertDelay)
-        }
-    }
     @Published var beepVolume: Float {
         didSet {
             UserDefaults.standard.set(beepVolume, forKey: "beepVolume")
@@ -84,7 +142,6 @@ class PostureMonitor: NSObject, ObservableObject {
         }
     }
     private var badPostureTimer: DispatchSourceTimer?
-    private let badPostureNotificationDelay: TimeInterval = 5.0  // 5 seconds
 
     // Haptic feedback
     private let hapticLight = UIImpactFeedbackGenerator(style: .light)
@@ -114,60 +171,135 @@ class PostureMonitor: NSObject, ObservableObject {
     private var foregroundObserver: NSObjectProtocol?
     private var toggleMonitoringObserver: NSObjectProtocol?
 
-    // Calibration: Good posture is around pitch 0 and roll 0
-    private let targetPitch: Double = 0.0
-    private let targetRoll: Double = 0.0
+    // Calibration: the user's neutral head position, captured during onboarding
+    // (or later re-calibrated). Falls back to 0 when never calibrated.
+    private var targetPitch: Double { CalibrationStore.pitch }
+    private var targetRoll: Double { CalibrationStore.roll }
 
-    // Sensitivity settings
-    enum Sensitivity: Int, CaseIterable {
-        case low = 0
-        case medium = 1
-        case high = 2
-
-        var pitchThreshold: Double {
-            switch self {
-            case .low: return 0.50     // ~17 degrees - less sensitive
-            case .medium: return 0.30  // ~11 degrees - balanced
-            case .high: return 0.20    // ~9 degrees - more sensitive
-            }
-        }
-
-        var rollThreshold: Double {
-            switch self {
-            case .low: return 0.50     // ~17 degrees - less sensitive
-            case .medium: return 0.30  // ~11 degrees - balanced
-            case .high: return 0.20    // ~9 degrees - more sensitive
-            }
-        }
-
-        var displayName: String {
-            switch self {
-            case .low: return "Low"
-            case .medium: return "Medium"
-            case .high: return "High"
-            }
-        }
+    /// Re-captures the current head orientation as the neutral baseline.
+    func recalibrate() {
+        CalibrationStore.save(pitch: pitch, roll: roll)
+        hapticSuccess.notificationOccurred(.success)
+        logger.log("🎯 Recalibrated to pitch=\(pitch), roll=\(roll)", category: "MONITOR")
     }
 
-    @Published var sensitivity: Sensitivity {
+    // MARK: - Posture mode
+
+    /// The user's chosen usage context. Drives detection strictness, grace and
+    /// alert timing through `effectiveParameters`.
+    @Published var mode: PostureMode {
         didSet {
-            UserDefaults.standard.set(sensitivity.rawValue, forKey: "sensitivity")
+            UserDefaults.standard.set(mode.rawValue, forKey: "postureMode")
+            applyEffectiveParameters()
         }
     }
+
+    /// Custom-mode detection threshold (radians), applied to both pitch & roll.
+    @Published var customThreshold: Double {
+        didSet {
+            UserDefaults.standard.set(customThreshold, forKey: "customThreshold")
+            if mode == .custom { applyEffectiveParameters() }
+        }
+    }
+
+    /// Custom-mode sound alert delay (seconds).
+    @Published var customAlertDelay: TimeInterval {
+        didSet {
+            UserDefaults.standard.set(customAlertDelay, forKey: "customAlertDelay")
+            if mode == .custom { applyEffectiveParameters() }
+        }
+    }
+
+    /// When on, sustained walking temporarily switches detection to Active so
+    /// natural head movement doesn't trigger alerts. Reverts once you stop.
+    @Published var autoRelaxOnWalking: Bool {
+        didSet {
+            UserDefaults.standard.set(autoRelaxOnWalking, forKey: "autoRelaxOnWalking")
+            guard isMonitoring else { return }
+            if autoRelaxOnWalking {
+                startWalkDetection()
+            } else {
+                stopWalkDetection()
+            }
+        }
+    }
+
+    /// True while auto-detection currently sees you moving (walking/running/etc).
+    @Published private(set) var autoWalkActive = false
+
+    // MARK: Debug telemetry (surfaced by the live debug screen)
+
+    /// When the current stretch of bad posture began (nil while good). The debug
+    /// screen uses this + `effectiveParameters.graceDuration` to draw a live
+    /// countdown to the alert.
+    @Published private(set) var badPostureStartedAt: Date?
+    /// When the most recent posture alert actually fired.
+    @Published private(set) var lastAlertFiredAt: Date?
+    /// Human-readable current motion activity (e.g. "Walking · high").
+    @Published private(set) var currentActivityDescription: String = "—"
+
+    /// The mode detection actually runs with right now — Active while auto-walk
+    /// is engaged, otherwise the user's chosen mode.
+    var effectiveMode: PostureMode {
+        (autoRelaxOnWalking && autoWalkActive) ? .active : mode
+    }
+
+    /// Concrete detection parameters for the current effective mode.
+    var effectiveParameters: PostureModeParameters {
+        if let preset = effectiveMode.presetParameters { return preset }
+        // Custom: user-set threshold, fixed grace, roll monitored.
+        return PostureModeParameters(
+            pitchThreshold: customThreshold,
+            rollThreshold: customThreshold,
+            monitorsRoll: true,
+            graceDuration: 5,
+            alertDelay: customAlertDelay
+        )
+    }
+
+    // Auto-walk detection: CMPedometer is the responsive primary signal (counts
+    // steps in near-real-time and works even hand-held); CMMotionActivity adds
+    // context and catches cycling/automotive.
+    private let activityManager = CMMotionActivityManager()
+    private let pedometer = CMPedometer()
+    private var isWalkDetecting = false
+    private var walkReleaseTimer: Timer?
+    private var lastPedometerSteps = 0
+
+    /// Engaged while steps are actively accruing (fast, reliable).
+    private var walkingByPedometer = false { didSet { recomputeAutoWalk() } }
+    /// Engaged when Core Motion's activity classifier reports sustained movement.
+    private var movingByActivity = false { didSet { recomputeAutoWalk() } }
 
     override init() {
         // Load saved preferences
         self.isNotificationEnabled = UserDefaults.standard.object(forKey: "isNotificationEnabled") as? Bool ?? true
         self.isSoundEnabled = UserDefaults.standard.object(forKey: "isSoundEnabled") as? Bool ?? true
-        self.soundAlertDelay = UserDefaults.standard.object(forKey: "soundAlertDelay") as? TimeInterval ?? 1.0
         self.beepVolume = UserDefaults.standard.object(forKey: "beepVolume") as? Float ?? 1.0
-        let sensitivityRaw = UserDefaults.standard.object(forKey: "sensitivity") as? Int ?? Sensitivity.medium.rawValue
-        self.sensitivity = Sensitivity(rawValue: sensitivityRaw) ?? .medium
+        self.customThreshold = UserDefaults.standard.object(forKey: "customThreshold") as? Double ?? 0.24
+        self.customAlertDelay = UserDefaults.standard.object(forKey: "customAlertDelay") as? TimeInterval ?? 5.0
+        self.autoRelaxOnWalking = UserDefaults.standard.object(forKey: "autoRelaxOnWalking") as? Bool ?? true
+
+        // Resolve the active mode, migrating legacy "sensitivity" users.
+        if let modeRaw = UserDefaults.standard.object(forKey: "postureMode") as? Int,
+           let saved = PostureMode(rawValue: modeRaw) {
+            self.mode = saved
+        } else if let legacy = UserDefaults.standard.object(forKey: "sensitivity") as? Int {
+            // low → relaxed, medium/high → desk (there's no stricter preset)
+            self.mode = (legacy == 0) ? .relaxed : .desk
+        } else {
+            self.mode = .desk
+        }
 
         super.init()
         checkAvailability()
         requestNotificationPermission()
         setupLifecycleObservers()
+    }
+
+    /// Pushes the current effective mode's alert timing to the audio engine.
+    private func applyEffectiveParameters() {
+        backgroundAudio.setAlertDelay(effectiveParameters.alertDelay)
     }
 
     func setDataStore(_ dataStore: PostureDataStore) {
@@ -215,7 +347,7 @@ class PostureMonitor: NSObject, ObservableObject {
 
         // Use silent audio to keep app alive in background
         backgroundAudio.setSoundEnabled(isSoundEnabled)
-        backgroundAudio.setAlertDelay(soundAlertDelay)
+        backgroundAudio.setAlertDelay(effectiveParameters.alertDelay)
         backgroundAudio.setBeepVolume(beepVolume)
         backgroundAudio.startBackgroundAudio()
         logger.log("Started silent audio for background keep-alive", category: "BACKGROUND")
@@ -282,56 +414,200 @@ class PostureMonitor: NSObject, ObservableObject {
             self.isConnected = true
             self.errorMessage = nil
 
-            // Get pitch (forward/backward tilt) and roll (left/right tilt)
-            let currentPitch = motion.attitude.pitch
-            let currentRoll = motion.attitude.roll
+            self.evaluatePosture(currentPitch: motion.attitude.pitch,
+                                 currentRoll: motion.attitude.roll)
+        }
 
-            self.pitch = currentPitch
-            self.roll = currentRoll
+        // Begin auto-walk detection (no-op if unavailable or disabled)
+        startWalkDetection()
+        #endif
+    }
 
-            // Calculate deviation from target (pitch 0, roll 0)
-            let pitchDeviation = abs(currentPitch - self.targetPitch)
-            let rollDeviation = abs(currentRoll - self.targetRoll)
+    // MARK: - Posture evaluation (shared)
 
-            // Detect bad posture based on deviation magnitude and sensitivity
-            let isForwardLean = pitchDeviation > self.sensitivity.pitchThreshold
-            let isSidewaysLean = rollDeviation > self.sensitivity.rollThreshold
+    /// Single source of truth for turning a raw (pitch, roll) sample into a
+    /// posture status, using the current effective mode's parameters. Used by
+    /// both the initial and the restarted motion-update streams.
+    private func evaluatePosture(currentPitch: Double, currentRoll: Double) {
+        self.pitch = currentPitch
+        self.roll = currentRoll
 
-            let previousStatus = self.postureStatus
+        let params = effectiveParameters
 
-            if isForwardLean && isSidewaysLean {
-                self.postureStatus = .poorPosture
-            } else if isForwardLean {
-                self.postureStatus = .forwardLean
-            } else if isSidewaysLean {
-                self.postureStatus = .sidewaysLean
-            } else {
-                self.postureStatus = .good
+        // Deviation from the user's calibrated neutral position.
+        let pitchDeviation = abs(currentPitch - targetPitch)
+        let rollDeviation = abs(currentRoll - targetRoll)
+
+        let isForwardLean = pitchDeviation > params.pitchThreshold
+        // Active mode disables roll — side sway while walking is noise, not slouch.
+        let isSidewaysLean = params.monitorsRoll && rollDeviation > params.rollThreshold
+
+        let previousStatus = postureStatus
+
+        if isForwardLean && isSidewaysLean {
+            postureStatus = .poorPosture
+        } else if isForwardLean {
+            postureStatus = .forwardLean
+        } else if isSidewaysLean {
+            postureStatus = .sidewaysLean
+        } else {
+            postureStatus = .good
+        }
+
+        handlePostureTransition(previousStatus: previousStatus)
+    }
+
+    /// Reacts to a posture status change: tracking, audio, haptics and the
+    /// grace timer that eventually fires a notification.
+    private func handlePostureTransition(previousStatus: PostureStatus) {
+        // Track posture time
+        sessionTracker.updatePostureStatus(postureStatus)
+
+        // Update background audio based on posture
+        backgroundAudio.setPostureState(postureStatus == .good ? .good : .bad)
+
+        if previousStatus == .good && postureStatus != .good {
+            // Bad posture just started — begin the grace timer
+            hapticLight.impactOccurred()
+            startBadPostureTimer()
+        } else if previousStatus != .good && postureStatus == .good {
+            // Posture improved — cancel timer and remove notifications
+            hapticSuccess.notificationOccurred(.success)
+            cancelBadPostureTimer()
+            removePostureNotifications()
+        }
+    }
+
+    // MARK: - Auto-walk detection
+
+    /// Starts motion-activity updates so sustained walking can relax detection.
+    /// Prompts for Motion & Fitness permission on first use; degrades silently
+    /// if unavailable or denied.
+    private func startWalkDetection() {
+        guard autoRelaxOnWalking, !isWalkDetecting else { return }
+        isWalkDetecting = true
+
+        logMotionAuthorization()
+
+        // Pedometer — responsive walking detection via live step updates. Steps
+        // are counted in near-real-time and register even with the phone in hand.
+        if CMPedometer.isStepCountingAvailable() {
+            lastPedometerSteps = 0
+            pedometer.startUpdates(from: Date()) { [weak self] data, error in
+                guard let self = self, let data = data, error == nil else { return }
+                let steps = data.numberOfSteps.intValue
+                DispatchQueue.main.async {
+                    // New steps since the last callback → the user is walking now.
+                    guard steps > self.lastPedometerSteps else { return }
+                    self.lastPedometerSteps = steps
+                    self.walkingByPedometer = true
+                    self.scheduleWalkRelease()
+                    if !self.movingByActivity {
+                        let cadence = data.currentCadence?.doubleValue ?? 0
+                        self.currentActivityDescription = cadence > 0
+                            ? "Walking · \(String(format: "%.1f", cadence)) st/s"
+                            : "Walking · steps"
+                    }
+                }
             }
+        } else {
+            logger.log("Pedometer step counting unavailable", category: "MOTION")
+        }
 
-            // Track posture time
-            self.sessionTracker.updatePostureStatus(self.postureStatus)
-
-            // Update background audio based on posture
-            if self.postureStatus == .good {
-                self.backgroundAudio.setPostureState(.good)
-            } else {
-                self.backgroundAudio.setPostureState(.bad)
-            }
-
-            // Handle posture status changes
-            if previousStatus == .good && self.postureStatus != .good {
-                // Bad posture detected - start 5 second timer
-                self.hapticLight.impactOccurred()
-                self.startBadPostureTimer()
-            } else if previousStatus != .good && self.postureStatus == .good {
-                // Posture improved - cancel timer and remove notifications
-                self.hapticSuccess.notificationOccurred(.success)
-                self.cancelBadPostureTimer()
-                self.removePostureNotifications()
+        // Activity classifier — adds context and catches cycling / driving.
+        // Permissive on engaging (any confidence), conservative on releasing.
+        if CMMotionActivityManager.isActivityAvailable() {
+            activityManager.startActivityUpdates(to: .main) { [weak self] activity in
+                guard let self = self, let activity = activity else { return }
+                self.currentActivityDescription = Self.describe(activity)
+                let moving = activity.walking || activity.running || activity.automotive || activity.cycling
+                if moving {
+                    self.movingByActivity = true
+                } else if activity.stationary && activity.confidence != .low {
+                    self.movingByActivity = false
+                }
             }
         }
-        #endif
+
+        logger.log("🚶 Auto-walk detection started", category: "MOTION")
+    }
+
+    private func stopWalkDetection() {
+        guard isWalkDetecting else { return }
+        isWalkDetecting = false
+        pedometer.stopUpdates()
+        activityManager.stopActivityUpdates()
+        walkReleaseTimer?.invalidate()
+        walkReleaseTimer = nil
+        walkingByPedometer = false
+        movingByActivity = false
+        currentActivityDescription = "—"
+        logger.log("🚶 Auto-walk detection stopped", category: "MOTION")
+    }
+
+    /// Releases the pedometer "walking" flag after a few quiet seconds without
+    /// new steps, so a brief pause doesn't immediately snap back to strict mode.
+    private func scheduleWalkRelease() {
+        walkReleaseTimer?.invalidate()
+        walkReleaseTimer = Timer.scheduledTimer(withTimeInterval: 6.0, repeats: false) { [weak self] _ in
+            self?.walkingByPedometer = false
+        }
+    }
+
+    /// Active whenever either signal currently sees movement; reverts only once
+    /// both are quiet.
+    private func recomputeAutoWalk() {
+        setAutoWalkActive(walkingByPedometer || movingByActivity)
+    }
+
+    /// Flips the auto-walk override and re-applies alert timing when it changes.
+    private func setAutoWalkActive(_ active: Bool) {
+        guard autoWalkActive != active else { return }
+        autoWalkActive = active
+        logger.log("🚶 Auto-walk \(active ? "engaged → Active mode" : "released")", category: "MOTION")
+        applyEffectiveParameters()
+    }
+
+    /// Logs (and surfaces, when off) the Motion & Fitness authorization — the
+    /// most common reason auto-walk silently does nothing.
+    private func logMotionAuthorization() {
+        let status = CMMotionActivityManager.authorizationStatus()
+        let name: String
+        switch status {
+        case .authorized: name = "authorized"
+        case .denied: name = "denied"
+        case .restricted: name = "restricted"
+        case .notDetermined: name = "notDetermined"
+        @unknown default: name = "unknown"
+        }
+        logger.log("Motion & Fitness authorization: \(name)", category: "MOTION")
+        if status == .denied || status == .restricted {
+            currentActivityDescription = "Motion & Fitness off"
+        }
+    }
+
+    private static func describe(_ activity: CMMotionActivity) -> String {
+        let confidence: String
+        switch activity.confidence {
+        case .low: confidence = "low"
+        case .medium: confidence = "medium"
+        case .high: confidence = "high"
+        @unknown default: confidence = "?"
+        }
+        let state: String
+        if activity.walking { state = "Walking" }
+        else if activity.running { state = "Running" }
+        else if activity.cycling { state = "Cycling" }
+        else if activity.automotive { state = "Automotive" }
+        else if activity.stationary { state = "Stationary" }
+        else { state = "Unknown" }
+        return "\(state) · \(confidence)"
+    }
+
+    /// Debug-only override that forces (or releases) the auto-walk state so the
+    /// live debug screen can exercise the Active-mode behaviour without walking.
+    func debugForceAutoWalk(_ on: Bool) {
+        setAutoWalkActive(on)
     }
 
     func stopMonitoring(keepLiveActivity: Bool = false) {
@@ -352,6 +628,9 @@ class PostureMonitor: NSObject, ObservableObject {
         // Stop silent audio
         backgroundAudio.stopBackgroundAudio()
         logger.log("Stopped silent audio", category: "BACKGROUND")
+
+        // Stop auto-walk detection
+        stopWalkDetection()
 
         // End session tracking
         sessionTracker.endSession()
@@ -419,21 +698,26 @@ class PostureMonitor: NSObject, ObservableObject {
         // Cancel any existing timer
         cancelBadPostureTimer()
 
-        // Create DispatchSourceTimer for reliable background execution
+        // Create DispatchSourceTimer for reliable background execution.
+        // Grace period comes from the current mode — Active waits much longer so
+        // transient movement while walking doesn't fire a notification.
+        badPostureStartedAt = Date()
+
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
-        timer.schedule(deadline: .now() + badPostureNotificationDelay)
+        timer.schedule(deadline: .now() + effectiveParameters.graceDuration)
         timer.setEventHandler { [weak self] in
             guard let self = self else { return }
 
             // Check if still in bad posture
             if self.postureStatus != .good {
-                self.logger.log("⚠️ Bad posture detected for 5s - triggering notification", category: "ALERT")
+                self.logger.log("⚠️ Bad posture sustained for \(self.effectiveParameters.graceDuration)s - triggering notification", category: "ALERT")
 
                 // Send notification if enabled
                 if self.isNotificationEnabled {
                     self.sendBadPostureNotification()
                 }
 
+                self.lastAlertFiredAt = Date()
                 self.sessionTracker.incrementAlertCount()
             }
         }
@@ -444,6 +728,7 @@ class PostureMonitor: NSObject, ObservableObject {
     private func cancelBadPostureTimer() {
         badPostureTimer?.cancel()
         badPostureTimer = nil
+        badPostureStartedAt = nil
     }
 
     func endLiveActivityIfNotMonitoring() {
@@ -642,54 +927,8 @@ class PostureMonitor: NSObject, ObservableObject {
                 self.isConnected = true
                 self.errorMessage = nil
 
-                // Get pitch (forward/backward tilt) and roll (left/right tilt)
-                let currentPitch = motion.attitude.pitch
-                let currentRoll = motion.attitude.roll
-
-                self.pitch = currentPitch
-                self.roll = currentRoll
-
-                // Calculate deviation from target (pitch 0, roll 0)
-                let pitchDeviation = abs(currentPitch - self.targetPitch)
-                let rollDeviation = abs(currentRoll - self.targetRoll)
-
-                // Detect bad posture based on deviation magnitude and sensitivity
-                let isForwardLean = pitchDeviation > self.sensitivity.pitchThreshold
-                let isSidewaysLean = rollDeviation > self.sensitivity.rollThreshold
-
-                let previousStatus = self.postureStatus
-
-                if isForwardLean && isSidewaysLean {
-                    self.postureStatus = .poorPosture
-                } else if isForwardLean {
-                    self.postureStatus = .forwardLean
-                } else if isSidewaysLean {
-                    self.postureStatus = .sidewaysLean
-                } else {
-                    self.postureStatus = .good
-                }
-
-                // Track posture time
-                self.sessionTracker.updatePostureStatus(self.postureStatus)
-
-                // Update background audio based on posture
-                if self.postureStatus == .good {
-                    self.backgroundAudio.setPostureState(.good)
-                } else {
-                    self.backgroundAudio.setPostureState(.bad)
-                }
-
-                // Handle posture status changes
-                if previousStatus == .good && self.postureStatus != .good {
-                    // Bad posture detected - start 5 second timer
-                    self.hapticLight.impactOccurred()
-                    self.startBadPostureTimer()
-                } else if previousStatus != .good && self.postureStatus == .good {
-                    // Posture improved - cancel timer and remove notifications
-                    self.hapticSuccess.notificationOccurred(.success)
-                    self.cancelBadPostureTimer()
-                    self.removePostureNotifications()
-                }
+                self.evaluatePosture(currentPitch: motion.attitude.pitch,
+                                     currentRoll: motion.attitude.roll)
             }
 
             self.logger.log("✅ Motion updates restarted", category: "LIFECYCLE")
@@ -775,25 +1014,7 @@ class PostureMonitor: NSObject, ObservableObject {
 
             print("🔧 Mock: pitch=\(String(format: "%.2f", self.pitch)), roll=\(String(format: "%.2f", self.roll)), status=\(self.postureStatus)")
 
-            // Track posture time
-            self.sessionTracker.updatePostureStatus(self.postureStatus)
-
-            // Update background audio based on posture
-            if self.postureStatus == .good {
-                self.backgroundAudio.setPostureState(.good)
-            } else {
-                self.backgroundAudio.setPostureState(.bad)
-            }
-
-            // Handle posture status changes
-            if previousStatus == .good && self.postureStatus != .good {
-                self.hapticLight.impactOccurred()
-                self.startBadPostureTimer()
-            } else if previousStatus != .good && self.postureStatus == .good {
-                self.hapticSuccess.notificationOccurred(.success)
-                self.cancelBadPostureTimer()
-                self.removePostureNotifications()
-            }
+            self.handlePostureTransition(previousStatus: previousStatus)
         }
 
         // Start session tracking

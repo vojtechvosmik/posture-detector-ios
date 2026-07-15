@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		25E0349F25B3483E68EA8F4B /* BackgroundAudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */; };
+		4942E75CF22DFCA20424A193 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DB844D9A0CEDFAD60B5DA61 /* PaywallView.swift */; };
+		68582854E24D09BAB4C884E8 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5011E61BF1FB75D0DC4C22E /* SubscriptionManager.swift */; };
 		879791CF7D89FB973BF8DCA9 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D0E2044CE139A8EE341C4F /* OnboardingView.swift */; };
 		8C9D4E9F2F11836900DAA24B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C9D4E9E2F11836900DAA24B /* WidgetKit.framework */; };
 		8C9D4EA12F11836900DAA24B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C9D4EA02F11836900DAA24B /* SwiftUI.framework */; };
@@ -44,8 +46,10 @@
 		A1000006 /* PostureVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016 /* PostureVisualizer.swift */; };
 		A1000007 /* BluetoothMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017 /* BluetoothMonitor.swift */; };
 		A38ADA654DEBF7B5CD7AC03C /* ToggleMonitoringIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */; };
+		B5AFD950C005FABBE877C9C9 /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EF2F41661C8BCFE935ACD7 /* CalibrationStore.swift */; };
 		BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */; };
 		C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */; };
+		D163E0A9218BFF3DB425491A /* OnboardingMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC4C71EE0172B6C7AF74274A /* OnboardingMotionManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +78,7 @@
 
 /* Begin PBXFileReference section */
 		0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundAudioManager.swift; sourceTree = "<group>"; };
+		11EF2F41661C8BCFE935ACD7 /* CalibrationStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalibrationStore.swift; sourceTree = "<group>"; };
 		2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DebugLogsScreen.swift; path = Debug/DebugLogsScreen.swift; sourceTree = "<group>"; };
 		66D0E2044CE139A8EE341C4F /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		8C9D4E9C2F11836900DAA24B /* PostureLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PostureLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -106,6 +111,7 @@
 		8CD3D1DC2F13D925000A9C3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8CD3D1DD2F13F8B8000A9C3C /* PostureDetector.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PostureDetector.entitlements; sourceTree = "<group>"; };
 		993D5F9B3908E9DF5450A61C /* DebugLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
+		9DB844D9A0CEDFAD60B5DA61 /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		A1000010 /* PostureDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PostureDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000011 /* PostureDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDetectorApp.swift; sourceTree = "<group>"; };
 		A1000013 /* PostureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureMonitor.swift; sourceTree = "<group>"; };
@@ -113,11 +119,13 @@
 		A1000015 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A1000016 /* PostureVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureVisualizer.swift; sourceTree = "<group>"; };
 		A1000017 /* BluetoothMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothMonitor.swift; sourceTree = "<group>"; };
+		D5011E61BF1FB75D0DC4C22E /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToggleMonitoringIntent.swift; sourceTree = "<group>"; };
+		EC4C71EE0172B6C7AF74274A /* OnboardingMotionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingMotionManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		8C9D4EB22F11836A00DAA24B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		8C9D4EB22F11836A00DAA24B /* Exceptions for "PostureLiveActivity" folder in "PostureLiveActivityExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -127,7 +135,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8C9D4EA22F11836900DAA24B /* PostureLiveActivity */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (8C9D4EB22F11836A00DAA24B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PostureLiveActivity; sourceTree = "<group>"; };
+		8C9D4EA22F11836900DAA24B /* PostureLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8C9D4EB22F11836A00DAA24B /* Exceptions for "PostureLiveActivity" folder in "PostureLiveActivityExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PostureLiveActivity;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,6 +169,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		882EE8A50A664A6FCD3A6D0D /* Paywall */ = {
+			isa = PBXGroup;
+			children = (
+				9DB844D9A0CEDFAD60B5DA61 /* PaywallView.swift */,
+			);
+			name = Paywall;
+			path = Paywall;
+			sourceTree = "<group>";
+		};
 		8C9D4E9D2F11836900DAA24B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -168,6 +196,7 @@
 				8C9D4F0C2F12643E00DAA24B /* Extension */,
 				8C9D4F042F1261BF00DAA24B /* AppRoot.swift */,
 				66D0E2044CE139A8EE341C4F /* OnboardingView.swift */,
+				882EE8A50A664A6FCD3A6D0D /* Paywall */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
@@ -185,6 +214,9 @@
 				993D5F9B3908E9DF5450A61C /* DebugLogger.swift */,
 				0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */,
 				D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */,
+				11EF2F41661C8BCFE935ACD7 /* CalibrationStore.swift */,
+				EC4C71EE0172B6C7AF74274A /* OnboardingMotionManager.swift */,
+				D5011E61BF1FB75D0DC4C22E /* SubscriptionManager.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -462,6 +494,10 @@
 				25E0349F25B3483E68EA8F4B /* BackgroundAudioManager.swift in Sources */,
 				BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */,
 				879791CF7D89FB973BF8DCA9 /* OnboardingView.swift in Sources */,
+				B5AFD950C005FABBE877C9C9 /* CalibrationStore.swift in Sources */,
+				D163E0A9218BFF3DB425491A /* OnboardingMotionManager.swift in Sources */,
+				68582854E24D09BAB4C884E8 /* SubscriptionManager.swift in Sources */,
+				4942E75CF22DFCA20424A193 /* PaywallView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -27,8 +27,7 @@ struct HomeScreen: View {
                 scoreMeterCard
                 metricsCard
                 settingsCard
-                sensitivityCard
-                alertDelayCard
+                modeCard
                 volumeCard
             }
             .padding(.horizontal, 20)
@@ -181,130 +180,168 @@ struct HomeScreen: View {
         }
     }
 
-    @ViewBuilder private var sensitivityCard: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.green)
+    @ViewBuilder private var modeCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header — name + one-line description of the selected mode
+            HStack(spacing: 8) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.blue)
 
-                        Text("Sensitivity")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
-                    }
-
-                    Text("How easily bad posture is detected")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.gray)
-                }
+                Text("Mode")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.primary)
 
                 Spacer()
-
-                Text(postureMonitor.sensitivity.displayName)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.green)
             }
 
-            HStack(spacing: 12) {
-                ForEach(PostureMonitor.Sensitivity.allCases, id: \.rawValue) { level in
+            Text(postureMonitor.effectiveMode.shortDescription)
+                .font(.system(size: 13))
+                .foregroundColor(.gray)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .id(postureMonitor.effectiveMode)
+                .transition(.opacity)
+
+            // Mode selector — pick what you're doing, not an abstract number
+            HStack(spacing: 8) {
+                ForEach(PostureMode.allCases) { m in
                     Button(action: {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            postureMonitor.sensitivity = level
+                            postureMonitor.mode = m
                         }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     }) {
-                        Text(level.displayName)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(postureMonitor.sensitivity == level ? .white : .green)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(
-                                postureMonitor.sensitivity == level ?
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.green, Color.green.opacity(0.7)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ) :
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                            )
-                            .cornerRadius(12)
+                        VStack(spacing: 6) {
+                            Image(systemName: m.icon)
+                                .font(.system(size: 18, weight: .semibold))
+                            Text(m.displayName)
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundColor(postureMonitor.mode == m ? .white : .blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            postureMonitor.mode == m ?
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                ) :
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                        )
+                        .cornerRadius(12)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
+            }
+
+            // Auto-relax while walking
+            Toggle(isOn: $postureMonitor.autoRelaxOnWalking) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Auto-relax while walking")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text(postureMonitor.autoWalkActive
+                         ? "You're moving — detection relaxed"
+                         : "Eases detection when you're on the move")
+                        .font(.system(size: 12))
+                        .foregroundColor(postureMonitor.autoWalkActive ? .blue : .gray)
+                }
+            }
+            .tint(.blue)
+
+            // Custom-only controls, revealed on demand
+            if postureMonitor.mode == .custom {
+                Divider()
+                customControls
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .padding(20)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: postureMonitor.mode)
+        .animation(.easeInOut(duration: 0.2), value: postureMonitor.autoWalkActive)
     }
 
-    @ViewBuilder private var alertDelayCard: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "timer")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.orange)
+    @ViewBuilder private var customControls: some View {
+        let sensitivityPercent = Int(round((0.5 - postureMonitor.customThreshold) / 0.35 * 100))
 
-                        Text("Alert Delay")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
-                    }
-
-                    Text("Delay before sound alerts start")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.gray)
+        VStack(alignment: .leading, spacing: 18) {
+            // Sensitivity (higher = stricter = smaller threshold)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Sensitivity")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text("\(sensitivityPercent)%")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.blue)
                 }
 
-                Spacer()
+                Slider(
+                    value: Binding(
+                        get: { 0.5 - postureMonitor.customThreshold },
+                        set: { postureMonitor.customThreshold = 0.5 - $0 }
+                    ),
+                    in: 0.0...0.35
+                )
+                .tint(.blue)
 
-                Text("\(Int(postureMonitor.soundAlertDelay))s")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.orange)
+                HStack {
+                    Text("Relaxed").font(.system(size: 11)).foregroundColor(.gray)
+                    Spacer()
+                    Text("Strict").font(.system(size: 11)).foregroundColor(.gray)
+                }
             }
 
-            HStack(spacing: 12) {
-                ForEach([1, 5, 10, 15, 30, 60], id: \.self) { seconds in
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            postureMonitor.soundAlertDelay = TimeInterval(seconds)
+            // Alert delay
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Alert delay")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text("\(Int(postureMonitor.customAlertDelay))s")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.orange)
+                }
+
+                HStack(spacing: 8) {
+                    ForEach([1, 5, 10, 15, 30, 60], id: \.self) { seconds in
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                postureMonitor.customAlertDelay = TimeInterval(seconds)
+                            }
+                        }) {
+                            Text("\(seconds)s")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(postureMonitor.customAlertDelay == TimeInterval(seconds) ? .white : .orange)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(
+                                    postureMonitor.customAlertDelay == TimeInterval(seconds) ?
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.orange, Color.orange.opacity(0.7)]),
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        ) :
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                )
+                                .cornerRadius(10)
                         }
-                    }) {
-                        Text("\(seconds)s")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(postureMonitor.soundAlertDelay == TimeInterval(seconds) ? .white : .orange)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                postureMonitor.soundAlertDelay == TimeInterval(seconds) ?
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.orange, Color.orange.opacity(0.7)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ) :
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                            )
-                            .cornerRadius(12)
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
             }
         }
-        .padding(20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
 
     @ViewBuilder private var volumeCard: some View {

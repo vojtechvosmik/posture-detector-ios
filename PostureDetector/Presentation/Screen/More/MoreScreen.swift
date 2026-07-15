@@ -9,14 +9,19 @@ import SwiftUI
 
 struct MoreScreen: View {
     @StateObject private var dataStore = PostureDataStore()
+    @ObservedObject private var subscriptions = SubscriptionManager.shared
     @State private var showingHowToUse = false
     @State private var showingSupported = false
     @State private var showingTerms = false
     @State private var showingPrivacy = false
+    @State private var showingPaywall = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                // Subscription Section
+                subscriptionSection
+
                 // Insights Section
                 insightsSection
 
@@ -54,6 +59,92 @@ struct MoreScreen: View {
         }
         .sheet(isPresented: $showingPrivacy) {
             PrivacyPolicyView()
+        }
+        .fullScreenCover(isPresented: $showingPaywall) {
+            PaywallView(delayClose: false)
+        }
+    }
+
+    // MARK: - Subscription Section
+
+    @ViewBuilder
+    private var subscriptionSection: some View {
+        if subscriptions.isPro {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: [.blue, .blue.opacity(0.6)],
+                                             startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Postura PRO")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text("Your subscription is active. Thank you!")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(.green)
+            }
+            .padding(16)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        } else {
+            Button {
+                showingPaywall = true
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [.blue, .blue.opacity(0.6)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 46, height: 46)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text("Upgrade to")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text("PRO")
+                                .font(.system(size: 12, weight: .heavy))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 2)
+                                .background(Color.blue, in: Capsule())
+                        }
+                        Text("Unlimited tracking, insights & custom alerts")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.secondary)
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.blue.opacity(0.35), lineWidth: 1)
+                )
+                .shadow(color: Color.blue.opacity(0.1), radius: 8, x: 0, y: 2)
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -215,6 +306,35 @@ struct MoreScreen: View {
             SectionHeader(title: "Debug Tools", icon: "hammer.fill")
 
             VStack(spacing: 0) {
+                NavigationLink(destination: PostureDebugScreen()) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.green.opacity(0.15))
+                                .frame(width: 32, height: 32)
+
+                            Image(systemName: "waveform.path.ecg")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.green)
+                        }
+
+                        Text("Live Monitor")
+                            .font(.system(size: 15))
+                            .foregroundColor(.primary)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.gray.opacity(0.5))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+
+                Divider()
+                    .padding(.leading, 52)
+
                 NavigationLink(destination: DebugLogsScreen()) {
                     HStack(spacing: 12) {
                         ZStack {
@@ -932,5 +1052,267 @@ struct HighlightRow: View {
                 .font(.system(size: 14))
                 .foregroundColor(.primary)
         }
+    }
+}
+
+// MARK: - Live Monitor Debug Screen
+
+/// A self-contained testing sandbox: start monitoring here and watch, in real
+/// time, exactly what the engine sees — live posture, the slouch→alert
+/// countdown, the current mode & thresholds, and the auto-relax (walking) state.
+struct PostureDebugScreen: View {
+    @StateObject private var monitor = PostureMonitor()
+    @StateObject private var dataStore = PostureDataStore()
+    @State private var simulateWalking = false
+
+    private var params: PostureModeParameters { monitor.effectiveParameters }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                monitorToggle
+                liveCard
+                modeCard
+                countdownCard
+                autoRelaxCard
+            }
+            .padding(20)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+        .navigationTitle("Live Monitor")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { monitor.setDataStore(dataStore) }
+        .onDisappear {
+            if monitor.isMonitoring { monitor.stopMonitoring() }
+        }
+    }
+
+    // MARK: Start / stop
+
+    private var monitorToggle: some View {
+        Button {
+            if monitor.isMonitoring {
+                monitor.stopMonitoring()
+            } else {
+                monitor.startMonitoring()
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: monitor.isMonitoring ? "stop.fill" : "play.fill")
+                Text(monitor.isMonitoring ? "Stop monitoring" : "Start monitoring")
+                    .font(.system(size: 17, weight: .semibold))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(monitor.isMonitoring ? Color.red : Color.green,
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Live posture
+
+    private var liveCard: some View {
+        DebugCard(title: "Live posture", icon: "figure.stand", tint: statusColor) {
+            HStack(spacing: 18) {
+                PostureVisualizer(pitch: monitor.pitch, roll: monitor.roll,
+                                  postureStatus: monitor.postureStatus)
+                    .frame(width: 120, height: 120)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    statusBadge
+                    metricRow("Pitch", degrees(monitor.pitch))
+                    metricRow("Roll", degrees(monitor.roll))
+                }
+                Spacer()
+            }
+        }
+    }
+
+    private var statusBadge: some View {
+        Text(monitor.postureStatus.description)
+            .font(.system(size: 14, weight: .bold))
+            .foregroundColor(statusColor)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(statusColor.opacity(0.14), in: Capsule())
+    }
+
+    // MARK: Mode
+
+    private var modeCard: some View {
+        DebugCard(title: "Active detection", icon: "slider.horizontal.3", tint: .blue) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Text(monitor.effectiveMode.displayName)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.primary)
+                    if monitor.autoWalkActive {
+                        Text("AUTO")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 7).padding(.vertical, 3)
+                            .background(Color.orange, in: Capsule())
+                    }
+                    Spacer()
+                }
+                metricRow("Pitch threshold", "\(degrees(params.pitchThreshold))")
+                metricRow("Roll", params.monitorsRoll ? "\(degrees(params.rollThreshold))" : "off")
+                metricRow("Grace before alert", "\(Int(params.graceDuration))s")
+                metricRow("Sound delay", "\(Int(params.alertDelay))s")
+            }
+        }
+    }
+
+    // MARK: Slouch → alert countdown
+
+    private var countdownCard: some View {
+        DebugCard(title: "Slouch → alert", icon: "timer", tint: .orange) {
+            TimelineView(.periodic(from: Date(), by: 0.08)) { context in
+                countdownBody(now: context.date)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func countdownBody(now: Date) -> some View {
+        if let started = monitor.badPostureStartedAt {
+            let elapsed = now.timeIntervalSince(started)
+            let total = params.graceDuration
+            let remaining = max(0, total - elapsed)
+            let progress = total > 0 ? min(1, elapsed / total) : 1
+
+            HStack(spacing: 18) {
+                ZStack {
+                    Circle().stroke(Color.orange.opacity(0.15), lineWidth: 10)
+                    Circle()
+                        .trim(from: 0, to: progress)
+                        .stroke(remaining > 0 ? Color.orange : Color.red,
+                                style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    Text(remaining > 0 ? String(format: "%.1f", remaining) : "🔔")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundColor(remaining > 0 ? .orange : .red)
+                }
+                .frame(width: 84, height: 84)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(remaining > 0 ? "Alert in \(String(format: "%.1f", remaining))s" : "Alert fired")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text("Bad posture held for \(String(format: "%.1f", elapsed))s")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+        } else {
+            HStack(spacing: 12) {
+                Image(systemName: monitor.isMonitoring ? "checkmark.circle.fill" : "pause.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundColor(monitor.isMonitoring ? .green : .gray)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(monitor.isMonitoring ? "Posture OK" : "Not monitoring")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                    if let fired = monitor.lastAlertFiredAt {
+                        Text("Last alert \(Int(Date().timeIntervalSince(fired)))s ago")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: Auto-relax (walking)
+
+    private var autoRelaxCard: some View {
+        DebugCard(title: "Auto-relax (walking)", icon: "figure.walk", tint: monitor.autoWalkActive ? .orange : .blue) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(monitor.autoWalkActive ? "Engaged → Active mode" : "Idle")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(monitor.autoWalkActive ? .orange : .primary)
+                    Spacer()
+                    Circle()
+                        .fill(monitor.autoWalkActive ? Color.orange : Color(uiColor: .systemGray4))
+                        .frame(width: 12, height: 12)
+                }
+                metricRow("Detected activity", monitor.currentActivityDescription)
+                metricRow("Auto-relax setting", monitor.autoRelaxOnWalking ? "on" : "off")
+
+                Divider()
+
+                Toggle(isOn: $simulateWalking) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Simulate walking")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text("Force the Active override for testing")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .tint(.orange)
+                .onChange(of: simulateWalking) { on in
+                    monitor.debugForceAutoWalk(on)
+                }
+            }
+        }
+    }
+
+    // MARK: Helpers
+
+    private var statusColor: Color {
+        switch monitor.postureStatus {
+        case .good: return .green
+        case .unknown: return .gray
+        case .forwardLean, .sidewaysLean: return .orange
+        case .poorPosture: return .red
+        }
+    }
+
+    private func degrees(_ radians: Double) -> String {
+        "\(Int((radians * 180 / .pi).rounded()))°"
+    }
+
+    private func metricRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                .foregroundColor(.primary)
+        }
+    }
+}
+
+private struct DebugCard<Content: View>: View {
+    let title: String
+    let icon: String
+    let tint: Color
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(tint)
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            content
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
