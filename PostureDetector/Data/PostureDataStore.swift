@@ -10,6 +10,10 @@ import Combine
 import WidgetKit
 
 class PostureDataStore: ObservableObject {
+    /// Single shared store so every screen (Home, Calendar, More) reads and
+    /// writes the same data — otherwise each screen keeps its own stale copy.
+    static let shared = PostureDataStore()
+
     private let userDefaults = SharedDefaults.sharedUserDefaults
     private let historyKey = SharedDefaults.postureHistoryKey
 

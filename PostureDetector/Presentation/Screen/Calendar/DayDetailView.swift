@@ -2,7 +2,8 @@
 //  DayDetailView.swift
 //  PostureDetector
 //
-//  Detailed view for a specific day's posture data
+//  A single day's posture, in the dark "aurora" language: a big score dial and
+//  frosted glass breakdowns.
 //
 
 import SwiftUI
@@ -20,261 +21,171 @@ struct DayDetailView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 if let history = history, history.totalMonitoredSeconds > 0 {
-                    VStack(spacing: 20) {
-                        // Score card
-                        scoreCard(history: history)
-
-                        // Time breakdown
-                        timeBreakdownCard(history: history)
-
-                        // Stats grid
-                        statsGrid(history: history)
+                    VStack(spacing: 16) {
+                        scoreCard(history)
+                        timeBreakdownCard(history)
+                        statsGrid(history)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 18)
                     .padding(.vertical, 16)
                 } else {
-                    VStack(spacing: 16) {
-                        Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray.opacity(0.5))
-                            .padding(.top, 60)
-
-                        Text("No Data")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.primary)
-
-                        Text("You didn't monitor your posture on this day")
-                            .font(.system(size: 15))
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    }
-                    .frame(maxHeight: .infinity)
+                    noDataState
                 }
             }
+            .background(CalAurora())
             .navigationTitle(dateString)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                    Button(action: { dismiss() }) {
+                        Text("Done").font(.system(size: 16, weight: .semibold)).foregroundColor(CalTheme.accent)
                     }
                 }
             }
         }
     }
 
-    @ViewBuilder
-    private func scoreCard(history: PostureHistory) -> some View {
+    // MARK: - Score
+
+    private func scoreCard(_ history: PostureHistory) -> some View {
         let score = history.score
-        let scoreColor: Color = score >= 80 ? .green : score >= 60 ? .orange : .red
+        let color = CalTheme.scoreColor(score)
 
-        VStack(spacing: 16) {
-            Text("\(score)")
-                .font(.system(size: 72, weight: .bold))
-                .foregroundColor(scoreColor)
-
-            Text("Posture Score")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.gray)
-
-            // Progress circle
+        return VStack(spacing: 18) {
             ZStack {
+                Circle().fill(color).frame(width: 160, height: 160).blur(radius: 44).opacity(0.28)
+
                 Circle()
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 12)
-                    .frame(width: 120, height: 120)
+                    .stroke(Aura.softFill, lineWidth: 14)
+                    .frame(width: 156, height: 156)
 
                 Circle()
                     .trim(from: 0, to: CGFloat(score) / 100.0)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [scoreColor, scoreColor.opacity(0.7)]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
-                    )
-                    .frame(width: 120, height: 120)
+                    .stroke(LinearGradient(colors: [color, color.opacity(0.7)],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing),
+                            style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .frame(width: 156, height: 156)
                     .rotationEffect(.degrees(-90))
+
+                VStack(spacing: 2) {
+                    Text("\(score)").font(.system(size: 52, weight: .bold)).foregroundColor(.primary)
+                    Text("SCORE").font(.system(size: 12, weight: .semibold)).foregroundColor(.secondary)
+                        .tracking(1.5)
+                }
             }
+            Text(scoreLabel(score))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 30)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+        .calCard(0)
     }
 
-    @ViewBuilder
-    private func timeBreakdownCard(history: PostureHistory) -> some View {
-        VStack(spacing: 16) {
+    private func scoreLabel(_ score: Int) -> String {
+        score >= 80 ? "Excellent posture" : score >= 60 ? "Good posture" : "Needs improvement"
+    }
+
+    // MARK: - Time breakdown
+
+    private func timeBreakdownCard(_ history: PostureHistory) -> some View {
+        let total = max(history.totalMonitoredSeconds, 1)
+        let goodPct = Int((history.goodPostureSeconds / total) * 100)
+        let badPct = Int((history.badPostureSeconds / total) * 100)
+
+        return VStack(alignment: .leading, spacing: 16) {
+            Text("Time Breakdown").font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
+
+            breakdownRow("Good posture", formatDuration(history.goodPostureSeconds), goodPct, CalTheme.green)
+            breakdownRow("Bad posture", formatDuration(history.badPostureSeconds), badPct, CalTheme.coral)
+
+            Divider().overlay(Aura.hairline)
+
             HStack {
-                Text("Time Breakdown")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.primary)
-
+                Text("Total monitored").font(.system(size: 15, weight: .medium)).foregroundColor(.secondary)
                 Spacer()
-            }
-
-            VStack(spacing: 12) {
-                TimeBreakdownRow(
-                    label: "Good Posture",
-                    duration: formatDuration(history.goodPostureSeconds),
-                    percentage: Int((history.goodPostureSeconds / history.totalMonitoredSeconds) * 100),
-                    color: .green
-                )
-
-                TimeBreakdownRow(
-                    label: "Bad Posture",
-                    duration: formatDuration(history.badPostureSeconds),
-                    percentage: Int((history.badPostureSeconds / history.totalMonitoredSeconds) * 100),
-                    color: .red
-                )
-
-                Divider()
-
-                HStack {
-                    Text("Total Monitored")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.gray)
-
-                    Spacer()
-
-                    Text(formatDuration(history.totalMonitoredSeconds))
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
+                Text(formatDuration(history.totalMonitoredSeconds))
+                    .font(.system(size: 16, weight: .bold)).foregroundColor(.primary)
             }
         }
-        .padding(20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .calCard()
     }
 
-    @ViewBuilder
-    private func statsGrid(history: PostureHistory) -> some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                StatCard(
-                    icon: "exclamationmark.triangle.fill",
-                    value: "\(history.alertCount)",
-                    label: "Alerts",
-                    color: .orange
-                )
-
-                StatCard(
-                    icon: "clock.fill",
-                    value: formatDuration(history.totalMonitoredSeconds),
-                    label: "Monitored",
-                    color: .blue
-                )
-            }
-
-            HStack(spacing: 12) {
-                StatCard(
-                    icon: "checkmark.circle.fill",
-                    value: "\(Int((history.goodPostureSeconds / history.totalMonitoredSeconds) * 100))%",
-                    label: "Good Time",
-                    color: .green
-                )
-
-                StatCard(
-                    icon: "xmark.circle.fill",
-                    value: "\(Int((history.badPostureSeconds / history.totalMonitoredSeconds) * 100))%",
-                    label: "Bad Time",
-                    color: .red
-                )
-            }
-        }
-    }
-
-    private func formatDuration(_ seconds: TimeInterval) -> String {
-        let hours = Int(seconds) / 3600
-        let minutes = (Int(seconds) % 3600) / 60
-
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
-        } else if minutes > 0 {
-            return "\(minutes)m"
-        } else {
-            return "<1m"
-        }
-    }
-}
-
-struct TimeBreakdownRow: View {
-    let label: String
-    let duration: String
-    let percentage: Int
-    let color: Color
-
-    var body: some View {
+    private func breakdownRow(_ label: String, _ duration: String, _ pct: Int, _ color: Color) -> some View {
         VStack(spacing: 8) {
-            HStack {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 8, height: 8)
-
-                    Text(label)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.primary)
-                }
-
+            HStack(spacing: 8) {
+                Circle().fill(color).frame(width: 8, height: 8)
+                Text(label).font(.system(size: 15, weight: .medium)).foregroundColor(.primary)
                 Spacer()
-
-                Text(duration)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.primary)
-
-                Text("(\(percentage)%)")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.gray)
+                Text(duration).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                Text("· \(pct)%").font(.system(size: 14)).foregroundColor(.secondary)
             }
-
-            GeometryReader { geometry in
+            GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.15))
-                        .frame(height: 8)
-
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(color)
-                        .frame(width: geometry.size.width * (CGFloat(percentage) / 100.0), height: 8)
+                    Capsule().fill(Aura.softFill).frame(height: 8)
+                    Capsule().fill(color)
+                        .frame(width: max(8, geo.size.width * CGFloat(pct) / 100.0), height: 8)
                 }
             }
             .frame(height: 8)
         }
     }
-}
 
-struct StatCard: View {
-    let icon: String
-    let value: String
-    let label: String
-    let color: Color
+    // MARK: - Stats grid
 
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
+    private func statsGrid(_ history: PostureHistory) -> some View {
+        let total = max(history.totalMonitoredSeconds, 1)
+        let goodPct = Int((history.goodPostureSeconds / total) * 100)
+        let badPct = Int((history.badPostureSeconds / total) * 100)
 
-            Text(value)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.primary)
+        return VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                statCard("exclamationmark.triangle.fill", "\(history.alertCount)", "Alerts", CalTheme.orange)
+                statCard("clock.fill", formatDuration(history.totalMonitoredSeconds), "Monitored", CalTheme.accent)
+            }
+            HStack(spacing: 12) {
+                statCard("checkmark.circle.fill", "\(goodPct)%", "Good time", CalTheme.green)
+                statCard("xmark.circle.fill", "\(badPct)%", "Bad time", CalTheme.coral)
+            }
+        }
+    }
 
-            Text(label)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.gray)
+    private func statCard(_ icon: String, _ value: String, _ label: String, _ color: Color) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 22, weight: .semibold)).foregroundColor(color)
+            Text(value).font(.system(size: 20, weight: .bold)).foregroundColor(.primary)
+            Text(label).font(.system(size: 12, weight: .medium)).foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .calCard(0)
+    }
+
+    // MARK: - Empty
+
+    private var noDataState: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle().fill(CalTheme.accent).frame(width: 90, height: 90).blur(radius: 30).opacity(0.35)
+                Image(systemName: "calendar.badge.clock").font(.system(size: 50)).foregroundColor(.primary)
+            }
+            .padding(.top, 80)
+            Text("No data").font(.system(size: 22, weight: .bold)).foregroundColor(.primary)
+            Text("You didn't monitor your posture on this day.")
+                .font(.system(size: 15)).foregroundColor(.secondary)
+                .multilineTextAlignment(.center).padding(.horizontal, 40)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        if hours > 0 { return "\(hours)h \(minutes)m" }
+        if minutes > 0 { return "\(minutes)m" }
+        return "<1m"
     }
 }

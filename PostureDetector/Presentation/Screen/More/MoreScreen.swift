@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MoreScreen: View {
-    @StateObject private var dataStore = PostureDataStore()
+    @ObservedObject private var dataStore = PostureDataStore.shared
     @ObservedObject private var subscriptions = SubscriptionManager.shared
     @State private var showingHowToUse = false
     @State private var showingSupported = false
@@ -1062,7 +1062,7 @@ struct HighlightRow: View {
 /// countdown, the current mode & thresholds, and the auto-relax (walking) state.
 struct PostureDebugScreen: View {
     @StateObject private var monitor = PostureMonitor()
-    @StateObject private var dataStore = PostureDataStore()
+    @ObservedObject private var dataStore = PostureDataStore.shared
     @State private var simulateWalking = false
 
     private var params: PostureModeParameters { monitor.effectiveParameters }

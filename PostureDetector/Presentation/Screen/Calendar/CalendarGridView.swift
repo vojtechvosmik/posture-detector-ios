@@ -16,13 +16,13 @@ struct CalendarGridView: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             // Weekday headers
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(weekdaySymbols, id: \.self) { symbol in
-                    Text(symbol)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.gray)
+                    Text(symbol.uppercased())
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -42,7 +42,7 @@ struct CalendarGridView: View {
                         }
                     } else {
                         Color.clear
-                            .frame(height: 50)
+                            .frame(height: 52)
                     }
                 }
             }
@@ -117,60 +117,40 @@ struct DayCell: View {
         return formatter.string(from: date)
     }
 
-    private var backgroundColor: Color {
-        guard let history = history, history.totalMonitoredSeconds > 0 else {
-            return Color.gray.opacity(0.1)
-        }
+    private var hasData: Bool { (history?.totalMonitoredSeconds ?? 0) > 0 }
 
-        let score = history.score
-        if score >= 80 {
-            return Color.green.opacity(0.2)
-        } else if score >= 60 {
-            return Color.orange.opacity(0.2)
-        } else {
-            return Color.red.opacity(0.2)
-        }
-    }
-
-    private var borderColor: Color {
-        guard let history = history, history.totalMonitoredSeconds > 0 else {
-            return Color.clear
-        }
-
-        let score = history.score
-        if score >= 80 {
-            return Color.green
-        } else if score >= 60 {
-            return Color.orange
-        } else {
-            return Color.red
-        }
+    private var scoreColor: Color {
+        guard let history = history, hasData else { return .primary }
+        return CalTheme.scoreColor(history.score)
     }
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             Text(dayNumber)
                 .font(.system(size: 14, weight: isToday ? .bold : .medium))
-                .foregroundColor(isCurrentMonth ? .primary : .gray.opacity(0.5))
+                .foregroundColor(isCurrentMonth ? .primary : Color.primary.opacity(0.3))
 
-            if let history = history, history.totalMonitoredSeconds > 0 {
+            if let history = history, hasData {
                 Text("\(history.score)")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(borderColor)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(scoreColor)
             } else {
-                Text("-")
-                    .font(.system(size: 10, weight: .regular))
-                    .foregroundColor(.gray.opacity(0.3))
+                Circle()
+                    .fill(Color.secondary.opacity(0.5))
+                    .frame(width: 4, height: 4)
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 50)
-        .background(backgroundColor)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(isToday ? Color.blue : borderColor, lineWidth: isToday ? 2 : 1)
+        .frame(height: 52)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(hasData ? scoreColor.opacity(0.16) : Aura.softFill)
         )
-        .cornerRadius(8)
-        .opacity(isCurrentMonth ? 1.0 : 0.4)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(isToday ? CalTheme.accent : (hasData ? scoreColor.opacity(0.55) : Aura.hairline),
+                        lineWidth: isToday ? 2 : 1)
+        )
+        .opacity(isCurrentMonth ? 1.0 : 0.35)
     }
 }
