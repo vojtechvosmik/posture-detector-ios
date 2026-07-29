@@ -168,59 +168,129 @@ struct OnboardingView: View {
             stepHeader("Slouching is\nhurting you",
                        subtitle: "The damage builds silently — most people only notice once the pain has already set in.")
 
-            Spacer(minLength: 24)
+            Spacer(minLength: 22)
 
-            VStack(spacing: 12) {
-                fearRow("arrow.down.circle.fill", "27 kg of neck strain",
-                        "loads onto your spine every time you glance down at your phone.")
-                    .appearIn(0.12)
-                fearRow("bandage.fill", "8 in 10 adults",
-                        "will battle nagging neck or back pain at some point in life.")
-                    .appearIn(0.19)
-                fearRow("lungs.fill", "Up to 30% less air",
-                        "a hunched chest compresses your lungs and quietly drains your energy.")
-                    .appearIn(0.26)
-                fearRow("hourglass", "1,400+ hours a year",
-                        "the average person spends hunched over a screen — reshaping posture for good.")
-                    .appearIn(0.33)
+            VStack(spacing: 14) {
+                slouchHero.appearIn(0.12)
+
+                HStack(alignment: .top, spacing: 10) {
+                    factTile("8 in 10", "adults get neck or back pain").appearIn(0.22)
+                    factTile("−30%", "less air in a hunched chest").appearIn(0.28)
+                    factTile("1,400 h", "a year spent over a screen").appearIn(0.34)
+                }
+                .frame(height: 94)
+
+                reliefBanner.appearIn(0.42)
             }
             .padding(.horizontal, 36)
-
-            Spacer(minLength: 20)
-
-            HStack(spacing: 10) {
-                Image(systemName: "checkmark.seal.fill").font(.system(size: 15)).foregroundColor(success)
-                Text("The good news: it's reversible — and Postura makes it effortless.")
-                    .font(.system(size: 14, weight: .medium))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .foregroundColor(.white.opacity(0.9))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 36)
-            .appearIn(0.42)
 
             Spacer(minLength: 18)
         }
     }
 
-    private func fearRow(_ icon: String, _ stat: String, _ desc: String) -> some View {
-        HStack(spacing: 14) {
+    /// The hero of the reality check: a hunched-over-the-phone photo carrying the
+    /// single most visceral number, in the same tinted-photo language as Exercises.
+    private var slouchHero: some View {
+        ZStack(alignment: .bottomLeading) {
+            photoBackdrop("obPhotoSlouch", tint: warning, shade: 0.42)
+
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(warning.opacity(0.16))
-                    .frame(width: 44, height: 44)
-                Image(systemName: icon).font(.system(size: 19, weight: .semibold)).foregroundColor(warning)
+                ForEach(0..<3) { i in
+                    Circle().stroke(Color.white.opacity(0.15), lineWidth: 1.2)
+                        .frame(width: 82 + CGFloat(i) * 54, height: 82 + CGFloat(i) * 54)
+                }
             }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(stat).font(.system(size: 16, weight: .semibold)).foregroundColor(.white)
-                Text(desc).font(.system(size: 13)).foregroundColor(.white.opacity(0.6))
+            .offset(x: 112, y: -72)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.down.forward").font(.system(size: 10, weight: .bold))
+                    Text("HEAD TILTED 60°").font(.system(size: 11, weight: .bold)).tracking(0.6)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(Color.white.opacity(0.22), in: Capsule())
+
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    Text("27").font(.system(size: 46, weight: .bold))
+                    Text("kg").font(.system(size: 20, weight: .semibold)).opacity(0.85)
+                }
+                .foregroundColor(.white)
+
+                Text("of extra load on your neck every time you glance down at your phone.")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer()
+            .padding(20)
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.05)))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(warning.opacity(0.18), lineWidth: 1))
+        .frame(maxWidth: .infinity)
+        .frame(height: 214)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        .shadow(color: warning.opacity(0.3), radius: 18, y: 10)
+    }
+
+    /// Closes the step on hope — a bright, open-chest photo under the success tint.
+    private var reliefBanner: some View {
+        ZStack(alignment: .leading) {
+            photoBackdrop("obPhotoRelief", tint: success, shade: 0.30, strength: 0.92)
+            LinearGradient(colors: [Color.black.opacity(0.28), .clear],
+                           startPoint: .leading, endPoint: .trailing)
+
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("It's reversible")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("Postura catches the slouch before it becomes a habit.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.9))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 18)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 86)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.white.opacity(0.14), lineWidth: 1))
+        .shadow(color: success.opacity(0.25), radius: 14, y: 8)
+    }
+
+    /// A stock photo pushed far back: tinted hard, then shaded, so it reads as
+    /// texture and mood rather than as a picture competing with the type.
+    private func photoBackdrop(_ name: String, tint: Color, shade: Double, strength: Double = 0.8) -> some View {
+        ZStack {
+            Image(name).resizable().scaledToFill()
+            LinearGradient(colors: [tint.opacity(strength), tint.opacity(strength - 0.22)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [Color.white.opacity(0.05), Color.black.opacity(shade)],
+                           startPoint: .top, endPoint: .bottom)
+        }
+    }
+
+    private func factTile(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 5) {
+            Text(value)
+                .font(.system(size: 19, weight: .bold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.62))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 6)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.06)))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(warning.opacity(0.16), lineWidth: 1))
     }
 
     // MARK: - Mode

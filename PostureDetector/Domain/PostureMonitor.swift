@@ -21,7 +21,7 @@ import BackgroundTasks
 /// an abstract "sensitivity" number.
 enum PostureMode: Int, CaseIterable, Identifiable {
     case desk = 0       // sitting at a computer — strict, quick correction
-    case relaxed = 1    // couch / reading — lenient, fewer nags
+    case relaxed = 1    // couch / reading / multi-monitor desks — lenient, fewer nags
     case active = 2     // walking / on the go — ignores head sway, catches text-neck
     case custom = 3     // power users dial in their own numbers
 
@@ -42,7 +42,7 @@ enum PostureMode: Int, CaseIterable, Identifiable {
     var shortDescription: String {
         switch self {
         case .desk: return "Precise correction while working at a computer."
-        case .relaxed: return "Easygoing — for the couch, reading or watching TV."
+        case .relaxed: return "Easygoing — for the couch, TV, or turning between several monitors."
         case .active: return "Ignores natural head movement while you walk."
         case .custom: return "Set your own detection thresholds."
         }
