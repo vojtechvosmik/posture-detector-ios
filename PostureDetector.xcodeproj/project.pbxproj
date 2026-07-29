@@ -50,6 +50,7 @@
 		BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */; };
 		C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */; };
 		D163E0A9218BFF3DB425491A /* OnboardingMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC4C71EE0172B6C7AF74274A /* OnboardingMotionManager.swift */; };
+		A1000102 /* ExerciseScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000101 /* ExerciseScreen.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -122,6 +123,7 @@
 		D5011E61BF1FB75D0DC4C22E /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToggleMonitoringIntent.swift; sourceTree = "<group>"; };
 		EC4C71EE0172B6C7AF74274A /* OnboardingMotionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingMotionManager.swift; sourceTree = "<group>"; };
+		A1000101 /* ExerciseScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -268,11 +270,20 @@
 			isa = PBXGroup;
 			children = (
 				8C9D4F082F1262A500DAA24B /* Home */,
+				A1000103 /* Exercise */,
 				8C9D4F0F2F12658E00DAA24B /* Calendar */,
 				8C9D4F102F12659200DAA24B /* More */,
 				BFCE1AE6BE80202DA08D6675 /* Debug */,
 			);
 			path = Screen;
+			sourceTree = "<group>";
+		};
+		A1000103 /* Exercise */ = {
+			isa = PBXGroup;
+			children = (
+				A1000101 /* ExerciseScreen.swift */,
+			);
+			path = Exercise;
 			sourceTree = "<group>";
 		};
 		8C9D4F0C2F12643E00DAA24B /* Extension */ = {
@@ -496,6 +507,7 @@
 				879791CF7D89FB973BF8DCA9 /* OnboardingView.swift in Sources */,
 				B5AFD950C005FABBE877C9C9 /* CalibrationStore.swift in Sources */,
 				D163E0A9218BFF3DB425491A /* OnboardingMotionManager.swift in Sources */,
+				A1000102 /* ExerciseScreen.swift in Sources */,
 				68582854E24D09BAB4C884E8 /* SubscriptionManager.swift in Sources */,
 				4942E75CF22DFCA20424A193 /* PaywallView.swift in Sources */,
 			);

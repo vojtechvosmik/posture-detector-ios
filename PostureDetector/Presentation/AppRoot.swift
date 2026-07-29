@@ -12,6 +12,7 @@ struct AppRoot: View {
     var body: some View {
         TabView {
             homeTab
+            exerciseTab
             calendarTab
             moreTab
         }
@@ -23,6 +24,15 @@ struct AppRoot: View {
         }.tab(
             symbol: .figureStand,
             title: "Overview"
+        )
+    }
+
+    @ViewBuilder private var exerciseTab: some View {
+        NavigationView {
+            ExerciseScreen()
+        }.tab(
+            symbol: .sparkles,
+            title: "Exercises"
         )
     }
 

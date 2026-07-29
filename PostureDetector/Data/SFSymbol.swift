@@ -12,6 +12,7 @@ enum SFSymbol: String {
     case calendar = "calendar"
     case ellipsis = "ellipsis"
     case airpodspro = "airpodspro"
+    case sparkles = "sparkles"
 }
 
 extension Image {

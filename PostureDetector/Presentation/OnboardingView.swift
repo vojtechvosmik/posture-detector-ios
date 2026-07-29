@@ -39,13 +39,14 @@ struct OnboardingView: View {
     private let accent = Color(red: 0.36, green: 0.52, blue: 1.0)
     private let violet = Color(red: 0.58, green: 0.40, blue: 0.98)
     private let success = Color(red: 0.22, green: 0.80, blue: 0.55)
+    private let warning = Color(red: 1.0, green: 0.52, blue: 0.32)
 
     private var accentGradient: LinearGradient {
         LinearGradient(colors: [accent, violet], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     enum Step: Int, CaseIterable {
-        case welcome, mode, connect, calibrate, notifications
+        case welcome, reality, mode, connect, calibrate, notifications
     }
 
     var body: some View {
@@ -59,6 +60,7 @@ struct OnboardingView: View {
                     Group {
                         switch step {
                         case .welcome:       welcomeStep
+                        case .reality:       realityStep
                         case .mode:          modeStep
                         case .connect:       connectStep
                         case .calibrate:     calibrateStep
@@ -157,6 +159,68 @@ struct OnboardingView: View {
 
             Spacer(minLength: 20)
         }
+    }
+
+    // MARK: - Reality check (why this matters)
+
+    private var realityStep: some View {
+        VStack(spacing: 0) {
+            stepHeader("Slouching is\nhurting you",
+                       subtitle: "The damage builds silently — most people only notice once the pain has already set in.")
+
+            Spacer(minLength: 24)
+
+            VStack(spacing: 12) {
+                fearRow("arrow.down.circle.fill", "27 kg of neck strain",
+                        "loads onto your spine every time you glance down at your phone.")
+                    .appearIn(0.12)
+                fearRow("bandage.fill", "8 in 10 adults",
+                        "will battle nagging neck or back pain at some point in life.")
+                    .appearIn(0.19)
+                fearRow("lungs.fill", "Up to 30% less air",
+                        "a hunched chest compresses your lungs and quietly drains your energy.")
+                    .appearIn(0.26)
+                fearRow("hourglass", "1,400+ hours a year",
+                        "the average person spends hunched over a screen — reshaping posture for good.")
+                    .appearIn(0.33)
+            }
+            .padding(.horizontal, 36)
+
+            Spacer(minLength: 20)
+
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill").font(.system(size: 15)).foregroundColor(success)
+                Text("The good news: it's reversible — and Postura makes it effortless.")
+                    .font(.system(size: 14, weight: .medium))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundColor(.white.opacity(0.9))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 36)
+            .appearIn(0.42)
+
+            Spacer(minLength: 18)
+        }
+    }
+
+    private func fearRow(_ icon: String, _ stat: String, _ desc: String) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(warning.opacity(0.16))
+                    .frame(width: 44, height: 44)
+                Image(systemName: icon).font(.system(size: 19, weight: .semibold)).foregroundColor(warning)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(stat).font(.system(size: 16, weight: .semibold)).foregroundColor(.white)
+                Text(desc).font(.system(size: 13)).foregroundColor(.white.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.05)))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(warning.opacity(0.18), lineWidth: 1))
     }
 
     // MARK: - Mode
@@ -458,6 +522,8 @@ struct OnboardingView: View {
         switch step {
         case .welcome:
             return CTA(title: "Get Started") { next() }
+        case .reality:
+            return CTA(title: "Fix my posture") { next() }
         case .mode:
             return CTA(title: "Continue") { next() }
         case .connect:

@@ -2,8 +2,9 @@
 //  HomeScreen.swift
 //  PostureDetector
 //
-//  Cohesive "aurora" home that adapts to light & dark: a living gradient
-//  backdrop, a glowing posture-radar hero, and frosted glass cards.
+//  A friendly, consumer-style home: the live posture hero, today's score, a
+//  weekly trend, a compact controls card and a daily tip. Adaptive light / dark
+//  "aurora" language throughout.
 //
 
 import SwiftUI
@@ -15,6 +16,7 @@ struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var scheme
     @State private var isFullscreen = false
+    @State private var activeExercise: NeckExercise?
 
     init() {
         let monitor = PostureMonitor()
@@ -26,14 +28,17 @@ struct HomeScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 16) {
                 heroCard
-                scoreCard
-                togglesRow
-                modeCard
-                volumeCard
+                todayCard
+                controlsCard
+                weekCard
+                exerciseCard
             }
             .padding(.horizontal, 18)
             .padding(.top, 6)
             .padding(.bottom, 24)
+            .fullScreenCover(item: $activeExercise) { exercise in
+                ExerciseSessionView(exercise: exercise)
+            }
         }
         .background(AuraBackground())
         .navigationTitle("Postura")
@@ -45,12 +50,8 @@ struct HomeScreen: View {
             }
         }
         .fullScreenCover(isPresented: $isFullscreen) {
-            FullscreenVisualizerView(
-                pitch: postureMonitor.pitch,
-                roll: postureMonitor.roll,
-                postureStatus: postureMonitor.postureStatus,
-                isPresented: $isFullscreen
-            )
+            FullscreenVisualizerView(pitch: postureMonitor.pitch, roll: postureMonitor.roll,
+                                     postureStatus: postureMonitor.postureStatus, isPresented: $isFullscreen)
         }
     }
 
@@ -66,7 +67,6 @@ struct HomeScreen: View {
 
     @ViewBuilder private var heroCard: some View {
         ZStack {
-            // Soft status-tinted glow behind the radar
             Circle()
                 .fill(statusTint)
                 .frame(width: 300, height: 300)
@@ -76,8 +76,7 @@ struct HomeScreen: View {
                 .animation(.easeInOut(duration: 0.6), value: postureMonitor.postureStatus)
 
             if let errorMessage = postureMonitor.errorMessage {
-                heroMessage(icon: "exclamationmark.triangle.fill",
-                            title: "Something's off", subtitle: errorMessage)
+                heroMessage(icon: "exclamationmark.triangle.fill", title: "Something's off", subtitle: errorMessage)
             } else if !postureMonitor.isConnected {
                 connectState
             } else {
@@ -102,19 +101,17 @@ struct HomeScreen: View {
     private var liveState: some View {
         VStack(spacing: 0) {
             HStack {
-                scoreBadge
+                heroScorePill
                 Spacer()
                 if postureMonitor.isMonitoring {
                     heroIconButton("arrow.up.left.and.arrow.down.right") { isFullscreen = true }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 18)
+            .padding(.horizontal, 20).padding(.top, 18)
 
             Spacer(minLength: 4)
 
-            PostureVisualizer(pitch: postureMonitor.pitch,
-                              roll: postureMonitor.roll,
+            PostureVisualizer(pitch: postureMonitor.pitch, roll: postureMonitor.roll,
                               postureStatus: postureMonitor.postureStatus)
                 .frame(height: 188)
                 .opacity(postureMonitor.isMonitoring ? 1 : 0.5)
@@ -130,13 +127,13 @@ struct HomeScreen: View {
             .animation(.easeInOut(duration: 0.3), value: postureMonitor.postureStatus)
             .animation(.easeInOut(duration: 0.3), value: postureMonitor.isMonitoring)
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 24)
 
             playStopButton.padding(.bottom, 20)
         }
     }
 
-    private var scoreBadge: some View {
+    private var heroScorePill: some View {
         let score = dataStore.todayHistory.score
         return HStack(spacing: 7) {
             Circle().fill(Aura.scoreColor(score)).frame(width: 7, height: 7)
@@ -176,9 +173,7 @@ struct HomeScreen: View {
 
     private func heroIconButton(_ icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.secondary)
+            Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundColor(.secondary)
                 .frame(width: 38, height: 38)
                 .background(Aura.softFill, in: Circle())
                 .overlay(Circle().stroke(Aura.cardStroke, lineWidth: 1))
@@ -234,60 +229,277 @@ struct HomeScreen: View {
         }
     }
 
-    // MARK: - Score
+    // MARK: - Today
 
-    private var scoreCard: some View {
-        let score = dataStore.todayHistory.score
+    private var todayCard: some View {
+        let today = dataStore.todayHistory
+        let score = today.score
         let scoreColor = Aura.scoreColor(score)
 
         return VStack(spacing: 18) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Posture Score").font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
                     Text("Today's performance").font(.system(size: 13)).foregroundColor(.secondary)
                 }
                 Spacer()
-                Text("\(score)").font(.system(size: 36, weight: .bold)).foregroundColor(scoreColor)
+                Text("\(score)").font(.system(size: 38, weight: .bold)).foregroundColor(scoreColor)
                     .animation(.spring(response: 0.5, dampingFraction: 0.7), value: score)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Aura.softFill).frame(height: 12)
+                    Capsule().fill(Aura.softFill).frame(height: 14)
                     Capsule()
-                        .fill(LinearGradient(colors: [scoreColor, scoreColor.opacity(0.7)],
-                                             startPoint: .leading, endPoint: .trailing))
-                        .frame(width: max(12, geo.size.width * CGFloat(score) / 100.0), height: 12)
+                        .fill(LinearGradient(colors: [scoreColor, scoreColor.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(14, geo.size.width * CGFloat(score) / 100.0), height: 14)
                         .animation(.spring(response: 0.6, dampingFraction: 0.75), value: score)
                 }
             }
-            .frame(height: 12)
+            .frame(height: 14)
 
-            HStack(spacing: 10) {
-                statItem("clock.fill", dataStore.todayHistory.totalMonitoredDuration, "Total", Aura.accent)
+            HStack(spacing: 0) {
+                todayStat("clock.fill", Aura.accent, today.totalMonitoredDuration, "Total Time")
                 statDivider
-                statItem("checkmark.circle.fill", dataStore.todayHistory.goodPostureDuration, "Good", Aura.green)
+                todayStat("checkmark.seal.fill", Aura.green, today.goodPostureDuration, "Good Posture")
                 statDivider
-                statItem("exclamationmark.triangle.fill", "\(dataStore.todayHistory.alertCount)", "Alerts", Aura.orange)
+                todayStat("exclamationmark.triangle.fill", Aura.orange, "\(today.alertCount)", "Alerts")
                 statDivider
-                statItem(scoreImprovementIcon, dataStore.scoreImprovementPercentage, "vs Yest.", scoreImprovementColor)
+                todayStat(scoreImprovementIcon, scoreImprovementColor, dataStore.scoreImprovementPercentage, "vs Yesterday")
             }
         }
         .auraCard()
+    }
+
+    private func todayStat(_ icon: String, _ color: Color, _ value: String, _ label: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 16, weight: .semibold)).foregroundColor(color)
+            Text(value).font(.system(size: 16, weight: .bold)).foregroundColor(.primary)
+            Text(label).font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var statDivider: some View {
         Rectangle().fill(Aura.hairline).frame(width: 1, height: 38)
     }
 
-    private func statItem(_ icon: String, _ value: String, _ label: String, _ color: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 17, weight: .semibold)).foregroundColor(color)
-            Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-            Text(label).font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+    // MARK: - This week
+
+    private var weekCard: some View {
+        let week = weekData
+        let avg = weekAverage(week)
+
+        return VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("This Week").font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
+                Spacer()
+                if avg > 0 {
+                    Text("avg \(avg)")
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Aura.scoreColor(avg))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Aura.scoreColor(avg).opacity(0.14), in: Capsule())
+                }
+            }
+
+            HStack(spacing: 4) {
+                ForEach(Array(week.enumerated()), id: \.offset) { _, d in
+                    dayRing(d)
+                }
+            }
+        }
+        .auraCard()
+    }
+
+    private func dayRing(_ d: (day: String, score: Int, hasData: Bool, isToday: Bool)) -> some View {
+        let c = d.hasData ? Aura.scoreColor(d.score) : Color.secondary
+        return VStack(spacing: 9) {
+            ZStack {
+                Circle().stroke(Aura.softFill, lineWidth: 4).frame(width: 38, height: 38)
+                if d.hasData {
+                    Circle()
+                        .trim(from: 0, to: CGFloat(d.score) / 100.0)
+                        .stroke(LinearGradient(colors: [c, c.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .frame(width: 38, height: 38)
+                        .rotationEffect(.degrees(-90))
+                }
+                Text(d.hasData ? "\(d.score)" : "–")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(d.hasData ? .primary : .secondary)
+            }
+            .padding(3)
+            .overlay(
+                Circle().stroke(d.isToday ? Aura.accent.opacity(0.6) : .clear, lineWidth: 1.5)
+            )
+
+            Text(d.day)
+                .font(.system(size: 11, weight: d.isToday ? .bold : .medium))
+                .foregroundColor(d.isToday ? Aura.accent : .secondary)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Move break (guided exercises)
+
+    /// Mirrors the Exercises tab right on the home screen: a titled section with
+    /// an edge-to-edge carousel of the same poster cards. Tapping one starts it.
+    private var exerciseCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Move break")
+                    .font(.system(size: 18, weight: .bold)).foregroundColor(.primary)
+                Text("Guided neck & posture sessions")
+                    .font(.system(size: 13)).foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(NeckExercise.all) { exercise in
+                        Button { activeExercise = exercise } label: { ExerciseMiniCard(exercise: exercise) }
+                            .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 3)
+            }
+        }
+    }
+
+    // MARK: - Controls (compact, on-home)
+
+    private var controlsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: "slider.horizontal.3").font(.system(size: 15, weight: .semibold)).foregroundColor(Aura.accent)
+                Text("Mode").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                Spacer()
+            }
+
+            Text(postureMonitor.effectiveMode.shortDescription)
+                .font(.system(size: 13)).foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .id(postureMonitor.effectiveMode)
+                .transition(.opacity)
+
+            HStack(spacing: 8) {
+                ForEach(PostureMode.allCases) { modeChip($0) }
+            }
+
+            Toggle(isOn: $postureMonitor.autoRelaxOnWalking) {
+                Text("Auto-relax while walking").font(.system(size: 14, weight: .medium)).foregroundColor(.primary)
+            }
+            .tint(Aura.accent)
+
+            if postureMonitor.mode == .custom {
+                customControls.transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            Divider().overlay(Aura.hairline)
+
+            HStack(spacing: 10) {
+                togglePill("Sound", "speaker.wave.2.fill", $postureMonitor.isSoundEnabled, Aura.purple)
+                togglePill("Notify", "bell.fill", $postureMonitor.isNotificationEnabled, Aura.accent)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "speaker.fill").font(.system(size: 13)).foregroundColor(.secondary)
+                Slider(value: Binding(get: { Double(postureMonitor.beepVolume) },
+                                      set: { postureMonitor.beepVolume = Float($0) }), in: 0...1)
+                    .tint(Aura.purple)
+                Image(systemName: "speaker.wave.3.fill").font(.system(size: 13)).foregroundColor(.secondary)
+            }
+        }
+        .auraCard()
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: postureMonitor.mode)
+        .animation(.easeInOut(duration: 0.2), value: postureMonitor.autoWalkActive)
+    }
+
+    private func modeChip(_ m: PostureMode) -> some View {
+        let selected = postureMonitor.mode == m
+        return Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { postureMonitor.mode = m }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }) {
+            VStack(spacing: 5) {
+                Image(systemName: m.icon).font(.system(size: 16, weight: .semibold))
+                Text(m.displayName).font(.system(size: 10, weight: .semibold))
+            }
+            .foregroundColor(selected ? .white : .secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(selected
+                        ? AnyShapeStyle(LinearGradient(colors: [Aura.accent, Aura.violet], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        : AnyShapeStyle(Aura.softFill),
+                        in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func togglePill(_ title: String, _ icon: String, _ isOn: Binding<Bool>, _ tint: Color) -> some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.65)) { isOn.wrappedValue.toggle() }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: icon).font(.system(size: 15, weight: .semibold))
+                Text(title).font(.system(size: 14, weight: .semibold))
+                Spacer()
+                Image(systemName: isOn.wrappedValue ? "checkmark.circle.fill" : "circle").font(.system(size: 15))
+            }
+            .foregroundColor(isOn.wrappedValue ? .white : .secondary)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .background(isOn.wrappedValue
+                        ? AnyShapeStyle(LinearGradient(colors: [tint, tint.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        : AnyShapeStyle(Aura.softFill),
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var customControls: some View {
+        let sensitivityPercent = Int(round((0.5 - postureMonitor.customThreshold) / 0.35 * 100))
+        return VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Sensitivity").font(.system(size: 14, weight: .semibold)).foregroundColor(.primary)
+                    Spacer()
+                    Text("\(sensitivityPercent)%").font(.system(size: 14, weight: .bold)).foregroundColor(Aura.accent)
+                }
+                Slider(value: Binding(get: { 0.5 - postureMonitor.customThreshold },
+                                      set: { postureMonitor.customThreshold = 0.5 - $0 }), in: 0.0...0.35)
+                    .tint(Aura.accent)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Alert delay").font(.system(size: 14, weight: .semibold)).foregroundColor(.primary)
+                    Spacer()
+                    Text("\(Int(postureMonitor.customAlertDelay))s").font(.system(size: 14, weight: .bold)).foregroundColor(Aura.orange)
+                }
+                HStack(spacing: 8) {
+                    ForEach([1, 5, 10, 15, 30, 60], id: \.self) { seconds in
+                        let sel = postureMonitor.customAlertDelay == TimeInterval(seconds)
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { postureMonitor.customAlertDelay = TimeInterval(seconds) }
+                        }) {
+                            Text("\(seconds)s")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(sel ? .white : Aura.orange)
+                                .frame(maxWidth: .infinity).padding(.vertical, 9)
+                                .background(sel
+                                            ? AnyShapeStyle(LinearGradient(colors: [Aura.orange, Aura.orange.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                            : AnyShapeStyle(Aura.softFill),
+                                            in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
     }
 
     private var scoreImprovementIcon: String {
@@ -302,217 +514,28 @@ struct HomeScreen: View {
         return Aura.accent
     }
 
-    // MARK: - Quick toggles
+    // MARK: - Derived data
 
-    private var togglesRow: some View {
-        HStack(spacing: 16) {
-            glassToggle(title: "Sound", icon: "speaker.wave.2.fill",
-                        isOn: $postureMonitor.isSoundEnabled, tint: Aura.purple)
-            glassToggle(title: "Notify", icon: "bell.fill",
-                        isOn: $postureMonitor.isNotificationEnabled, tint: Aura.accent)
+    private var weekData: [(day: String, score: Int, hasData: Bool, isToday: Bool)] {
+        let cal = Calendar.current
+        let symbols = cal.veryShortWeekdaySymbols
+        return (0..<7).reversed().map { offset in
+            let date = cal.date(byAdding: .day, value: -offset, to: Date()) ?? Date()
+            let h = dataStore.getHistory(for: date)
+            let weekday = cal.component(.weekday, from: date) - 1
+            return (symbols[weekday], h?.score ?? 0, (h?.totalMonitoredSeconds ?? 0) > 0, offset == 0)
         }
     }
 
-    private func glassToggle(title: String, icon: String, isOn: Binding<Bool>, tint: Color) -> some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.65)) { isOn.wrappedValue.toggle() }
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        }) {
-            VStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(isOn.wrappedValue
-                              ? AnyShapeStyle(LinearGradient(colors: [tint, tint.opacity(0.7)],
-                                                             startPoint: .topLeading, endPoint: .bottomTrailing))
-                              : AnyShapeStyle(Aura.softFill))
-                        .frame(width: 60, height: 60)
-                        .shadow(color: isOn.wrappedValue ? tint.opacity(0.4) : .clear, radius: 12)
-                    Image(systemName: icon)
-                        .font(.system(size: 26, weight: .semibold))
-                        .foregroundColor(isOn.wrappedValue ? .white : .secondary)
-                }
-                VStack(spacing: 3) {
-                    Text(title).font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    HStack(spacing: 6) {
-                        Circle().fill(isOn.wrappedValue ? tint : Color.secondary).frame(width: 6, height: 6)
-                        Text(isOn.wrappedValue ? "ON" : "OFF")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(isOn.wrappedValue ? tint : .secondary)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 22)
-            .auraCard(padding: 0)
-        }
-        .buttonStyle(.plain)
+    private func weekAverage(_ week: [(day: String, score: Int, hasData: Bool, isToday: Bool)]) -> Int {
+        let scored = week.filter { $0.hasData }
+        guard !scored.isEmpty else { return 0 }
+        return scored.reduce(0) { $0 + $1.score } / scored.count
     }
 
-    // MARK: - Mode
-
-    private var modeCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "slider.horizontal.3").font(.system(size: 16, weight: .semibold)).foregroundColor(Aura.accent)
-                Text("Mode").font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
-                Spacer()
-            }
-
-            Text(postureMonitor.effectiveMode.shortDescription)
-                .font(.system(size: 13)).foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .id(postureMonitor.effectiveMode)
-                .transition(.opacity)
-
-            HStack(spacing: 8) {
-                ForEach(PostureMode.allCases) { m in
-                    let selected = postureMonitor.mode == m
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { postureMonitor.mode = m }
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    }) {
-                        VStack(spacing: 6) {
-                            Image(systemName: m.icon).font(.system(size: 18, weight: .semibold))
-                            Text(m.displayName).font(.system(size: 11, weight: .semibold))
-                        }
-                        .foregroundColor(selected ? .white : .secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            selected
-                            ? AnyShapeStyle(LinearGradient(colors: [Aura.accent, Aura.violet], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            : AnyShapeStyle(Aura.softFill),
-                            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            Toggle(isOn: $postureMonitor.autoRelaxOnWalking) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Auto-relax while walking").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    Text(postureMonitor.autoWalkActive ? "You're moving — detection relaxed"
-                                                       : "Eases detection when you're on the move")
-                        .font(.system(size: 12))
-                        .foregroundColor(postureMonitor.autoWalkActive ? Aura.accent : .secondary)
-                }
-            }
-            .tint(Aura.accent)
-
-            if postureMonitor.mode == .custom {
-                Divider().overlay(Aura.hairline)
-                customControls.transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-        .auraCard()
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: postureMonitor.mode)
-        .animation(.easeInOut(duration: 0.2), value: postureMonitor.autoWalkActive)
-    }
-
-    private var customControls: some View {
-        let sensitivityPercent = Int(round((0.5 - postureMonitor.customThreshold) / 0.35 * 100))
-
-        return VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Sensitivity").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    Spacer()
-                    Text("\(sensitivityPercent)%").font(.system(size: 15, weight: .bold)).foregroundColor(Aura.accent)
-                }
-                Slider(
-                    value: Binding(
-                        get: { 0.5 - postureMonitor.customThreshold },
-                        set: { postureMonitor.customThreshold = 0.5 - $0 }
-                    ),
-                    in: 0.0...0.35
-                )
-                .tint(Aura.accent)
-                HStack {
-                    Text("Relaxed").font(.system(size: 11)).foregroundColor(.secondary)
-                    Spacer()
-                    Text("Strict").font(.system(size: 11)).foregroundColor(.secondary)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Alert delay").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    Spacer()
-                    Text("\(Int(postureMonitor.customAlertDelay))s").font(.system(size: 15, weight: .bold)).foregroundColor(Aura.orange)
-                }
-                HStack(spacing: 8) {
-                    ForEach([1, 5, 10, 15, 30, 60], id: \.self) { seconds in
-                        let sel = postureMonitor.customAlertDelay == TimeInterval(seconds)
-                        Button(action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                postureMonitor.customAlertDelay = TimeInterval(seconds)
-                            }
-                        }) {
-                            Text("\(seconds)s")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(sel ? .white : Aura.orange)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(
-                                    sel
-                                    ? AnyShapeStyle(LinearGradient(colors: [Aura.orange, Aura.orange.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                    : AnyShapeStyle(Aura.softFill),
-                                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Volume
-
-    private var volumeCard: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "speaker.wave.3.fill").font(.system(size: 16, weight: .semibold)).foregroundColor(Aura.purple)
-                        Text("Alert Volume").font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
-                    }
-                    Text("Volume of the beep alert sound").font(.system(size: 13)).foregroundColor(.secondary)
-                }
-                Spacer()
-                Text("\(Int(postureMonitor.beepVolume * 100))%")
-                    .font(.system(size: 24, weight: .bold)).foregroundColor(Aura.purple)
-            }
-
-            HStack(spacing: 10) {
-                ForEach([0.25, 0.5, 0.75, 1.0], id: \.self) { volume in
-                    let sel = postureMonitor.beepVolume == Float(volume)
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            postureMonitor.beepVolume = Float(volume)
-                        }
-                    }) {
-                        Text("\(Int(volume * 100))%")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(sel ? .white : Aura.purple)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                sel
-                                ? AnyShapeStyle(LinearGradient(colors: [Aura.purple, Aura.purple.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                : AnyShapeStyle(Aura.softFill),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .auraCard()
-    }
 }
+
+// MARK: - Settings sheet (all configuration lives here)
 
 // MARK: - Fullscreen visualizer
 
@@ -533,23 +556,16 @@ struct FullscreenVisualizerView: View {
     var body: some View {
         ZStack {
             AuraBackground()
-            Circle()
-                .fill(tint)
-                .frame(width: 360, height: 360)
-                .blur(radius: 120)
-                .opacity(0.35)
+            Circle().fill(tint).frame(width: 360, height: 360).blur(radius: 120).opacity(0.35)
                 .animation(.easeInOut(duration: 0.6), value: postureStatus)
 
-            PostureVisualizer(pitch: pitch, roll: roll, postureStatus: postureStatus)
-                .padding(40)
+            PostureVisualizer(pitch: pitch, roll: roll, postureStatus: postureStatus).padding(40)
 
             VStack {
                 HStack {
                     Spacer()
                     Button(action: { isPresented = false }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
+                        Image(systemName: "xmark").font(.system(size: 18, weight: .semibold)).foregroundColor(.primary)
                             .frame(width: 44, height: 44)
                             .background(Aura.softFill, in: Circle())
                             .overlay(Circle().stroke(Aura.cardStroke, lineWidth: 1))
