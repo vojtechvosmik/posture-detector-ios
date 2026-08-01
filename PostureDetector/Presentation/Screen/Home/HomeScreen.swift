@@ -17,6 +17,7 @@ struct HomeScreen: View {
     @Environment(\.colorScheme) private var scheme
     @State private var isFullscreen = false
     @State private var activeExercise: NeckExercise?
+    @State private var showingCoach = false
 
     init() {
         let monitor = PostureMonitor()
@@ -29,6 +30,7 @@ struct HomeScreen: View {
             VStack(spacing: 16) {
                 heroCard
                 todayCard
+                coachCard
                 controlsCard
                 weekCard
                 exerciseCard
@@ -363,6 +365,24 @@ struct HomeScreen: View {
                     }
                 }
                 .padding(.vertical, 3)
+            }
+        }
+    }
+
+    // MARK: - Coach (one-glance card; the full report lives in the Calendar tab)
+
+    @ViewBuilder private var coachCard: some View {
+        if let report = PostureInsightEngine.report(for: dataStore.allHistory,
+                                                     samples: PostureSampleStore.shared.days) {
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showingCoach = true
+            } label: {
+                CoachMiniCard(insight: report.headline)
+            }
+            .buttonStyle(.plain)
+            .sheet(isPresented: $showingCoach) {
+                CoachDetailSheet(report: report)
             }
         }
     }

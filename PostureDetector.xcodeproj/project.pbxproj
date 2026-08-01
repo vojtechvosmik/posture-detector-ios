@@ -16,6 +16,10 @@
 		8C9D4EAE2F11836A00DAA24B /* PostureLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8C9D4E9C2F11836900DAA24B /* PostureLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8C9D4EF62F122F9400DAA24B /* PostureMonitor+ActivityKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */; };
 		8C9D4EF82F12302F00DAA24B /* PostureStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */; };
+		8CAA10022F1230AA00DAA24B /* PostureInsightEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10012F1230AA00DAA24B /* PostureInsightEngine.swift */; };
+		8CAA100C2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA100B2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift */; };
+		8CAA100A2F1230AB00DAA24B /* PosturePatternAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10092F1230AB00DAA24B /* PosturePatternAnalyzer.swift */; };
+		8CAA10062F1230AA00DAA24B /* PostureInsightDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10052F1230AA00DAA24B /* PostureInsightDetails.swift */; };
 		8C9D4EFB2F12308300DAA24B /* PostureMonitor+Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4EFA2F12307A00DAA24B /* PostureMonitor+Notification.swift */; };
 		8C9D4F052F1261C600DAA24B /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F042F1261BF00DAA24B /* AppRoot.swift */; };
 		8C9D4F072F12626100DAA24B /* SFSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4F062F12625F00DAA24B /* SFSymbol.swift */; };
@@ -33,7 +37,9 @@
 		8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */; };
 		8CD3D1CB2F12A264000A9C3C /* RoutePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */; };
 		8CD3D1CD2F12A34C000A9C3C /* CurrentAudioOutputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */; };
+		8CAA10042F1230AA00DAA24B /* CoachPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10032F1230AA00DAA24B /* CoachPanel.swift */; };
 		8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */; };
+		8CAA10082F1230AB00DAA24B /* PostureSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10072F1230AB00DAA24B /* PostureSamples.swift */; };
 		8CD3D1D32F12DA54000A9C3C /* PostureDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */; };
 		8CD3D1D52F12DA8F000A9C3C /* PostureMonitor+Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */; };
 		8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */; };
@@ -87,6 +93,10 @@
 		8C9D4EA02F11836900DAA24B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+ActivityKit.swift"; sourceTree = "<group>"; };
 		8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureStatus.swift; sourceTree = "<group>"; };
+		8CAA10012F1230AA00DAA24B /* PostureInsightEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureInsightEngine.swift; sourceTree = "<group>"; };
+		8CAA100B2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureInsightEngine+Deep.swift"; sourceTree = "<group>"; };
+		8CAA10092F1230AB00DAA24B /* PosturePatternAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PosturePatternAnalyzer.swift; sourceTree = "<group>"; };
+		8CAA10052F1230AA00DAA24B /* PostureInsightDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureInsightDetails.swift; sourceTree = "<group>"; };
 		8C9D4EFA2F12307A00DAA24B /* PostureMonitor+Notification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Notification.swift"; sourceTree = "<group>"; };
 		8C9D4F042F1261BF00DAA24B /* AppRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoot.swift; sourceTree = "<group>"; };
 		8C9D4F062F12625F00DAA24B /* SFSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSymbol.swift; sourceTree = "<group>"; };
@@ -104,7 +114,9 @@
 		8CD3D1C82F1298F9000A9C3C /* BluetoothMonitor+Connect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BluetoothMonitor+Connect.swift"; sourceTree = "<group>"; };
 		8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePickerView.swift; sourceTree = "<group>"; };
 		8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAudioOutputView.swift; sourceTree = "<group>"; };
+		8CAA10032F1230AA00DAA24B /* CoachPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachPanel.swift; sourceTree = "<group>"; };
 		8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureHistory.swift; sourceTree = "<group>"; };
+		8CAA10072F1230AB00DAA24B /* PostureSamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureSamples.swift; sourceTree = "<group>"; };
 		8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureDataStore.swift; sourceTree = "<group>"; };
 		8CD3D1D42F12DA8F000A9C3C /* PostureMonitor+Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+Session.swift"; sourceTree = "<group>"; };
 		8CD3D1D62F12DF81000A9C3C /* CalendarGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarGridView.swift; sourceTree = "<group>"; };
@@ -207,6 +219,10 @@
 			isa = PBXGroup;
 			children = (
 				8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */,
+				8CAA10012F1230AA00DAA24B /* PostureInsightEngine.swift */,
+				8CAA100B2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift */,
+				8CAA10092F1230AB00DAA24B /* PosturePatternAnalyzer.swift */,
+				8CAA10052F1230AA00DAA24B /* PostureInsightDetails.swift */,
 				A1000013 /* PostureMonitor.swift */,
 				8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */,
 				8C9D4EFA2F12307A00DAA24B /* PostureMonitor+Notification.swift */,
@@ -228,6 +244,7 @@
 			children = (
 				8CD3D1D22F12DA54000A9C3C /* PostureDataStore.swift */,
 				8CD3D1D02F12D7A2000A9C3C /* PostureHistory.swift */,
+				8CAA10072F1230AB00DAA24B /* PostureSamples.swift */,
 				8C9D4F062F12625F00DAA24B /* SFSymbol.swift */,
 				8CBDE6B42F5D8A6D00307785 /* SharedDefaults.swift */,
 			);
@@ -248,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				8CD3D1CC2F12A34C000A9C3C /* CurrentAudioOutputView.swift */,
+				8CAA10032F1230AA00DAA24B /* CoachPanel.swift */,
 				A1000016 /* PostureVisualizer.swift */,
 				8CD3D1CA2F12A264000A9C3C /* RoutePickerView.swift */,
 			);
@@ -475,7 +493,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				8CD3D1CD2F12A34C000A9C3C /* CurrentAudioOutputView.swift in Sources */,
+				8CAA10042F1230AA00DAA24B /* CoachPanel.swift in Sources */,
 				8C9D4EF82F12302F00DAA24B /* PostureStatus.swift in Sources */,
+				8CAA10022F1230AA00DAA24B /* PostureInsightEngine.swift in Sources */,
+				8CAA100C2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift in Sources */,
+				8CAA100A2F1230AB00DAA24B /* PosturePatternAnalyzer.swift in Sources */,
+				8CAA10062F1230AA00DAA24B /* PostureInsightDetails.swift in Sources */,
 				A1000003 /* PostureMonitor.swift in Sources */,
 				8C9D4F142F1265C000DAA24B /* MoreScreen.swift in Sources */,
 				8C9D4F1A2F126E5600DAA24B /* ConnectView.swift in Sources */,
@@ -493,6 +516,7 @@
 				8C9D4F162F1268F700DAA24B /* MetricsView.swift in Sources */,
 				8C9D4F182F12693F00DAA24B /* ErrorView.swift in Sources */,
 				8CD3D1D12F12D7AC000A9C3C /* PostureHistory.swift in Sources */,
+				8CAA10082F1230AB00DAA24B /* PostureSamples.swift in Sources */,
 				8CD3D1C92F129901000A9C3C /* BluetoothMonitor+Connect.swift in Sources */,
 				8CBDE6B52F5D8A6D00307785 /* SharedDefaults.swift in Sources */,
 				8C9D4F122F1265A500DAA24B /* CalendarScreen.swift in Sources */,

@@ -39,6 +39,33 @@ struct DebugLogsScreen: View {
             }
             .padding()
 
+            #if DEBUG
+            // Seeds intraday samples so the deep coach can be exercised without
+            // waiting two weeks for real ones. Debug builds only.
+            HStack {
+                Button {
+                    PostureSampleStore.shared.seedDemoSamples()
+                    logContents = "Seeded 20 days of intraday samples.\n" + logContents
+                } label: {
+                    Label("Seed deep-analysis data", systemImage: "wand.and.stars")
+                }
+                .buttonStyle(.bordered)
+                .tint(.purple)
+
+                Spacer()
+
+                Button {
+                    PostureSampleStore.shared.clearSamples()
+                    logContents = "Cleared intraday samples.\n" + logContents
+                } label: {
+                    Label("Clear samples", systemImage: "trash.slash")
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            #endif
+
             Divider()
 
             // Log viewer

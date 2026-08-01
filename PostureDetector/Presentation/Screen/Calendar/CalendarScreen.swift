@@ -2,9 +2,8 @@
 //  CalendarScreen.swift
 //  PostureDetector
 //
-//  The "Posture Journal": a premium, data-forward history view — a hero 30-day
-//  average with a flowing score wave, a glowing 13-week consistency heatmap, and
-//  highlight stats. Adaptive light / dark aurora throughout.
+//  The "Posture Journal": a full-bleed month of score rings, a swipeable deck of
+//  bold stat cards, and the week's rhythm as a bar chart. Adaptive light / dark.
 //
 
 import SwiftUI
@@ -35,23 +34,22 @@ struct IdentifiableDate: Identifiable {
 struct CalendarScreen: View {
     @ObservedObject private var dataStore = PostureDataStore.shared
     @State private var selectedDate: IdentifiableDate?
-    @State private var appeared = false
     @State private var currentMonth = Date()
+    @State private var showingCoach = false
 
     private let calendar = Calendar.current
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             if hasAnyData {
-                VStack(spacing: 16) {
-                    heroCard
-                    heatmapCard
-                    monthCalendarCard
-                    highlightsRow
+                VStack(alignment: .leading, spacing: 26) {
+                    calendarSection
+                    coachSection
+                    statDeck
+                    dayMix
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 6)
-                .padding(.bottom, 28)
+                .padding(.top, 4)
+                .padding(.bottom, 34)
             } else {
                 emptyState
                     .padding(.top, 30)
@@ -59,122 +57,32 @@ struct CalendarScreen: View {
             }
         }
         .background(CalAurora())
-        .navigationTitle("Calendar")
-        .navigationBarTitleDisplayMode(.inline)
+        // No nav bar: the month header is the title, so the grid sits right at the top.
+        .navigationBarHidden(true)
         .sheet(item: $selectedDate) { item in
             DayDetailView(date: item.date, history: dataStore.getHistory(for: item.date))
         }
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.7)) { appeared = true }
-        }
     }
 
-    // MARK: - Hero
+    // MARK: - Month calendar (edge to edge)
 
-    private var heroCard: some View {
-        let avg = avg30
-        let color = Aura.scoreColor(avg)
-        return VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("LAST 30 DAYS")
-                        .font(.system(size: 11, weight: .heavy)).tracking(0.8).foregroundColor(.secondary)
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("\(avg)")
-                            .font(.system(size: 56, weight: .heavy))
-                            .foregroundStyle(LinearGradient(colors: [color, color.opacity(0.65)],
-                                                            startPoint: .top, endPoint: .bottom))
-                        Text("avg").font(.system(size: 17, weight: .semibold)).foregroundColor(.secondary)
-                    }
-                }
-                Spacer()
-                trendChip
-            }
-
-            ScoreWave(scores: waveScores, tint: color)
-                .frame(height: 74)
-                .opacity(appeared ? 1 : 0)
-                .animation(.easeOut(duration: 0.9), value: appeared)
-
-            HStack(spacing: 8) {
-                Image(systemName: insightIcon).font(.system(size: 13, weight: .bold)).foregroundColor(color)
-                Text(insight).font(.system(size: 14, weight: .semibold)).foregroundColor(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
-        }
-        .calCard()
-    }
-
-    @ViewBuilder private var trendChip: some View {
-        let d = trendDelta
-        if d != 0 {
-            let up = d > 0
-            HStack(spacing: 4) {
-                Image(systemName: up ? "arrow.up.right" : "arrow.down.right").font(.system(size: 11, weight: .heavy))
-                Text("\(abs(d)) pts").font(.system(size: 13, weight: .bold))
-            }
-            .foregroundColor(up ? Aura.green : Aura.coral)
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background((up ? Aura.green : Aura.coral).opacity(0.14), in: Capsule())
-        }
-    }
-
-    // MARK: - Heatmap
-
-    private var heatmapCard: some View {
-        let weeks = heatmapWeeks()
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Consistency").font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
-                Spacer()
-                Text("\(daysTracked) days tracked").font(.system(size: 13, weight: .medium)).foregroundColor(.secondary)
-            }
-
-            PostureHeatmap(weeks: weeks) { date in
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                selectedDate = IdentifiableDate(date: date)
-            }
-
-            HStack {
-                Text(monthLabel(weeks.first?.first?.date))
-                    .font(.system(size: 12, weight: .medium)).foregroundColor(.secondary)
-                Spacer()
-                Text("Today").font(.system(size: 12, weight: .medium)).foregroundColor(.secondary)
-            }
-
-            HStack(spacing: 16) {
-                legendItem(Aura.coral, "Needs work")
-                legendItem(Aura.orange, "Good")
-                legendItem(Aura.green, "Great")
-                Spacer()
-            }
-            .padding(.top, 2)
-        }
-        .calCard()
-    }
-
-    private func legendItem(_ color: Color, _ label: String) -> some View {
-        HStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 4, style: .continuous).fill(color).frame(width: 12, height: 12)
-            Text(label).font(.system(size: 12)).foregroundColor(.secondary)
-        }
-    }
-
-    // MARK: - Month calendar (browse & tap individual days)
-
-    private var monthCalendarCard: some View {
-        VStack(spacing: 16) {
+    private var calendarSection: some View {
+        VStack(spacing: 18) {
             HStack {
                 monthNavButton("chevron.left") { changeMonth(-1) }
                 Spacer()
-                Text(monthYearTitle)
-                    .font(.system(size: 17, weight: .bold)).foregroundColor(.primary)
-                    .id(monthYearTitle).transition(.opacity)
+                VStack(spacing: 1) {
+                    Text(monthTitle)
+                        .font(.system(size: 21, weight: .bold)).foregroundColor(.primary)
+                    Text(yearTitle)
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.secondary)
+                        .tracking(1.2)
+                }
+                .id(monthTitle).transition(.opacity)
                 Spacer()
                 monthNavButton("chevron.right", disabled: !canGoNext) { changeMonth(1) }
             }
-            .padding(.horizontal, 2)
+            .padding(.horizontal, 20)
 
             CalendarGridView(
                 month: currentMonth,
@@ -184,16 +92,28 @@ struct CalendarScreen: View {
                     selectedDate = IdentifiableDate(date: date)
                 }
             )
+            .padding(.horizontal, 10)
         }
-        .calCard()
+        // A soft bloom in the month's own colour keeps the edge-to-edge grid from
+        // feeling unanchored without boxing it into a card.
+        .background(
+            Circle()
+                .fill(Aura.scoreColor(monthAverage))
+                .frame(width: 320, height: 320)
+                .blur(radius: 90)
+                .opacity(0.16)
+                .offset(y: -30)
+                .allowsHitTesting(false),
+            alignment: .top
+        )
     }
 
     private func monthNavButton(_ icon: String, disabled: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(disabled ? .secondary.opacity(0.4) : .primary)
-                .frame(width: 38, height: 38)
+                .frame(width: 40, height: 40)
                 .background(Aura.softFill, in: Circle())
                 .overlay(Circle().stroke(Aura.hairline, lineWidth: 1))
         }
@@ -201,9 +121,15 @@ struct CalendarScreen: View {
         .buttonStyle(.plain)
     }
 
-    private var monthYearTitle: String {
+    private var monthTitle: String {
         let f = DateFormatter()
-        f.dateFormat = "MMMM yyyy"
+        f.dateFormat = "MMMM"
+        return f.string(from: currentMonth)
+    }
+
+    private var yearTitle: String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy"
         return f.string(from: currentMonth)
     }
 
@@ -218,26 +144,139 @@ struct CalendarScreen: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { currentMonth = m }
     }
 
-    // MARK: - Highlights
+    // MARK: - Coach (rule-based insights, ready to be swapped for a model)
 
-    private var highlightsRow: some View {
-        HStack(spacing: 12) {
-            statCard("flame.fill", Aura.orange, "\(streak)", streak == 1 ? "Day streak" : "Day streak")
-            statCard("star.fill", Aura.green, "\(bestScore)", "Best day")
-            statCard("clock.fill", Aura.accent, uprightText, "Upright")
+    @ViewBuilder private var coachSection: some View {
+        if let report = PostureInsightEngine.report(for: dataStore.allHistory,
+                                                     samples: PostureSampleStore.shared.days) {
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showingCoach = true
+            } label: {
+                CoachPanel(report: report)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 18)
+            .sheet(isPresented: $showingCoach) {
+                CoachDetailSheet(report: report)
+            }
         }
     }
 
-    private func statCard(_ icon: String, _ color: Color, _ value: String, _ label: String) -> some View {
-        VStack(spacing: 9) {
-            Image(systemName: icon).font(.system(size: 20, weight: .semibold)).foregroundColor(color)
-            Text(value).font(.system(size: 22, weight: .bold)).foregroundColor(.primary)
-                .lineLimit(1).minimumScaleFactor(0.7)
-            Text(label).font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
+    // MARK: - Stat deck (swipe through the highlights)
+
+    private var statDeck: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Highlights")
+                .font(.system(size: 20, weight: .bold)).foregroundColor(.primary)
+                .padding(.horizontal, 20)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(deckCards) { card in
+                        StatDeckCard(card: card)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 4)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .calCard(0)
+    }
+
+    private var deckCards: [DeckCard] {
+        var cards: [DeckCard] = [
+            DeckCard(icon: "waveform.path.ecg", color: Aura.scoreColor(avg30),
+                     value: "\(avg30)", unit: nil,
+                     label: "30-day average", detail: trendText),
+            DeckCard(icon: "checkmark.seal.fill", color: Aura.accent,
+                     value: "\(consistency)", unit: "%",
+                     label: "Consistency", detail: "\(daysTracked30) of the last 30 days"),
+            DeckCard(icon: "flame.fill", color: Aura.orange,
+                     value: "\(streak)", unit: streak == 1 ? "day" : "days",
+                     label: "Current streak",
+                     detail: longestStreak > streak ? "Best run \(longestStreak) days" : "Your best run yet"),
+            DeckCard(icon: "clock.fill", color: Aura.violet,
+                     value: uprightValue, unit: uprightUnit,
+                     label: "Upright time", detail: "Good posture, last 30 days")
+        ]
+
+        if let best = bestDay {
+            cards.append(DeckCard(icon: "trophy.fill", color: Aura.green,
+                                  value: "\(best.score)", unit: nil,
+                                  label: "Personal best", detail: dayLabel(best.date)))
+        }
+        if alertsPerDay > 0 {
+            cards.append(DeckCard(icon: "bell.badge.fill", color: Aura.coral,
+                                  value: String(format: "%.1f", alertsPerDay), unit: "/day",
+                                  label: "Slouch alerts", detail: "Average while tracking"))
+        }
+        return cards
+    }
+
+    // MARK: - Day mix (how the last 30 days landed)
+
+    private var dayMix: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Last 30 days")
+                    .font(.system(size: 20, weight: .bold)).foregroundColor(.primary)
+                Spacer(minLength: 8)
+                Text(mixHeadline)
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.secondary)
+            }
+
+            HStack(spacing: 20) {
+                DayMixDonut(segments: mixSegments,
+                            centerValue: "\(daysTracked30)",
+                            centerLabel: "of 30 days")
+                    .frame(width: 128, height: 128)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(mixSegments) { segment in
+                        HStack(spacing: 9) {
+                            Circle().fill(segment.color)
+                                .overlay(Circle().stroke(Aura.hairline, lineWidth: 1))
+                                .frame(width: 9, height: 9)
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(segment.label)
+                                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.primary)
+                                Text(segment.range)
+                                    .font(.system(size: 10.5)).foregroundColor(.secondary)
+                            }
+                            Spacer(minLength: 6)
+                            Text("\(segment.count)")
+                                .font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                                .monospacedDigit()
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .calCard()
+        .padding(.horizontal, 18)
+    }
+
+    /// Counts of great / good / rough / untracked days over the last 30.
+    private var mixSegments: [MixSegment] {
+        let scores = trackedScores(daysAgo: 0..<30)
+        let great = scores.filter { $0 >= 80 }.count
+        let good = scores.filter { $0 >= 60 && $0 < 80 }.count
+        let rough = scores.filter { $0 < 60 }.count
+        return [
+            MixSegment(color: Aura.green,  label: "Great",      range: "80 and up", count: great),
+            MixSegment(color: Aura.orange, label: "Good",       range: "60 – 79",   count: good),
+            MixSegment(color: Aura.coral,  label: "Needs work", range: "under 60",  count: rough),
+            MixSegment(color: Aura.softFill, label: "Untracked", range: "no session", count: 30 - scores.count)
+        ]
+    }
+
+    private var mixHeadline: String {
+        let segments = mixSegments.dropLast()          // ignore untracked
+        guard let top = segments.max(by: { $0.count < $1.count }), top.count > 0 else {
+            return "No sessions yet"
+        }
+        return "Mostly \(top.label.lowercased()) days"
     }
 
     // MARK: - Empty state
@@ -297,21 +336,26 @@ struct CalendarScreen: View {
         return s.isEmpty ? 0 : s.reduce(0, +) / s.count
     }
 
-    private var trendDelta: Int {
-        let cur = trackedScores(daysAgo: 0..<30)
-        let prev = trackedScores(daysAgo: 30..<60)
+    /// Average of the month currently on screen — drives the section's bloom colour.
+    private var monthAverage: Int {
+        let scores = dataStore.allHistory
+            .filter { $0.totalMonitoredSeconds > 0 && calendar.isDate($0.date, equalTo: currentMonth, toGranularity: .month) }
+            .map { $0.score }
+        return scores.isEmpty ? 0 : scores.reduce(0, +) / scores.count
+    }
+
+    /// This week's average minus the previous week's (0 when either is empty).
+    private var trendDelta7: Int {
+        let cur = trackedScores(daysAgo: 0..<7)
+        let prev = trackedScores(daysAgo: 7..<14)
         guard !cur.isEmpty, !prev.isEmpty else { return 0 }
         return cur.reduce(0, +) / cur.count - prev.reduce(0, +) / prev.count
     }
 
-    /// Daily scores for the last 30 days (0 for untracked), oldest → newest.
-    private var waveScores: [Double] {
-        let today = calendar.startOfDay(for: Date())
-        return (0..<30).reversed().map { off in
-            let d = calendar.date(byAdding: .day, value: -off, to: today) ?? today
-            let h = dataStore.getHistory(for: d)
-            return (h?.totalMonitoredSeconds ?? 0) > 0 ? Double(h?.score ?? 0) : 0
-        }
+    private var trendText: String {
+        if trendDelta7 > 0 { return "Up \(trendDelta7) pts this week" }
+        if trendDelta7 < 0 { return "Down \(abs(trendDelta7)) pts this week" }
+        return "Holding steady"
     }
 
     /// Consecutive tracked days ending today.
@@ -326,198 +370,209 @@ struct CalendarScreen: View {
         return s
     }
 
-    private var bestScore: Int { trackedDays.map { $0.score }.max() ?? 0 }
-    private var daysTracked: Int { trackedDays.count }
-
-    private var uprightText: String {
-        let secs = trackedDays.reduce(0.0) { $0 + $1.goodPostureSeconds }
-        let hours = secs / 3600
-        if hours >= 10 { return "\(Int(hours))h" }
-        if hours >= 1 { return String(format: "%.1fh", hours) }
-        return "\(Int(secs / 60))m"
-    }
-
-    private var insight: String {
-        if streak >= 7 { return "\(streak)-day streak — you're on fire" }
-        if trendDelta >= 3 { return "Trending up \(trendDelta) pts vs last month" }
-        if avg30 >= 80 { return "Excellent — your posture is dialed in" }
-        if streak >= 3 { return "\(streak) days in a row — keep it going" }
-        if avg30 == 0 { return "Start a session to build your journal" }
-        return "Every upright minute adds up"
-    }
-
-    private var insightIcon: String {
-        if streak >= 7 { return "flame.fill" }
-        if trendDelta >= 3 { return "arrow.up.right" }
-        if avg30 >= 80 { return "sparkles" }
-        return "chart.line.uptrend.xyaxis"
-    }
-
-    /// 13 weeks of days as columns (Mon→Sun rows), oldest week first, ending this week.
-    private func heatmapWeeks() -> [[HeatDay]] {
-        let numWeeks = 13
-        let today = calendar.startOfDay(for: Date())
-        // Monday-indexed weekday (Mon = 0 … Sun = 6)
-        let weekdayMon = (calendar.component(.weekday, from: today) + 5) % 7
-        guard let thisMonday = calendar.date(byAdding: .day, value: -weekdayMon, to: today),
-              let start = calendar.date(byAdding: .day, value: -(numWeeks - 1) * 7, to: thisMonday) else { return [] }
-
-        return (0..<numWeeks).map { w in
-            (0..<7).map { r -> HeatDay in
-                let date = calendar.date(byAdding: .day, value: w * 7 + r, to: start) ?? start
-                let future = date > today
-                let h = future ? nil : dataStore.getHistory(for: date)
-                let score = (h?.totalMonitoredSeconds ?? 0) > 0 ? h?.score : nil
-                return HeatDay(date: date, score: score, future: future,
-                               isToday: calendar.isDateInToday(date))
+    /// Longest run of consecutive tracked days anywhere in the history.
+    private var longestStreak: Int {
+        let days = Set(trackedDays.map { calendar.startOfDay(for: $0.date) })
+        var best = 0
+        for day in days {
+            // Only measure from the first day of a run.
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: day), !days.contains(prev) else { continue }
+            var run = 0
+            var cursor = day
+            while days.contains(cursor) {
+                run += 1
+                guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+                cursor = next
             }
+            best = max(best, run)
+        }
+        return best
+    }
+
+    private var daysTracked30: Int { trackedScores(daysAgo: 0..<30).count }
+    private var consistency: Int { Int((Double(daysTracked30) / 30 * 100).rounded()) }
+
+    private var bestDay: PostureHistory? { trackedDays.max(by: { $0.score < $1.score }) }
+
+    /// Total good-posture time over the last 30 days, split into value + unit.
+    private var uprightSeconds: TimeInterval {
+        let today = calendar.startOfDay(for: Date())
+        return (0..<30).reduce(0.0) { acc, off in
+            guard let d = calendar.date(byAdding: .day, value: -off, to: today) else { return acc }
+            return acc + (dataStore.getHistory(for: d)?.goodPostureSeconds ?? 0)
         }
     }
 
-    private func monthLabel(_ date: Date?) -> String {
-        guard let date = date else { return "" }
+    private var uprightValue: String {
+        let hours = uprightSeconds / 3600
+        if hours >= 10 { return "\(Int(hours))" }
+        if hours >= 1 { return String(format: "%.1f", hours) }
+        return "\(Int(uprightSeconds / 60))"
+    }
+
+    private var uprightUnit: String { uprightSeconds / 3600 >= 1 ? "h" : "m" }
+
+    private var alertsPerDay: Double {
+        let cutoff = calendar.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        let recent = trackedDays.filter { $0.date >= cutoff }
+        guard !recent.isEmpty else { return 0 }
+        return Double(recent.reduce(0) { $0 + $1.alertCount }) / Double(recent.count)
+    }
+
+    private func dayLabel(_ date: Date) -> String {
         let f = DateFormatter()
-        f.dateFormat = "MMM"
+        f.dateFormat = "d MMM"
         return f.string(from: date)
     }
 }
 
-// MARK: - Heatmap
+// MARK: - Coach cards
 
-struct HeatDay: Identifiable {
-    var id: Date { date }
-    let date: Date
-    let score: Int?     // nil = no data
-    let future: Bool
-    let isToday: Bool
+extension InsightTone {
+    /// The palette each tone speaks in.
+    var color: Color {
+        switch self {
+        case .celebration: return Aura.violet
+        case .positive:    return Aura.green
+        case .encouraging: return Aura.accent
+        case .neutral:     return Aura.accent
+        case .warning:     return Aura.orange
+        case .critical:    return Aura.coral
+        }
+    }
 }
 
-/// A GitHub-style contribution grid, reimagined with the posture palette: each
-/// day is a rounded cell coloured by its score, great days glow, today is ringed.
-struct PostureHeatmap: View {
-    let weeks: [[HeatDay]]
-    let onTap: (Date) -> Void
+// MARK: - Stat deck
 
-    private let cell: CGFloat = 18
-    private let gap: CGFloat = 4
+struct DeckCard: Identifiable {
+    let id = UUID()
+    let icon: String
+    let color: Color
+    let value: String
+    let unit: String?
+    let label: String
+    let detail: String
+}
+
+/// One card in the highlight deck: a compact gradient tile with a glyph
+/// watermark behind the number.
+private struct StatDeckCard: View {
+    let card: DeckCard
 
     var body: some View {
-        HStack(spacing: gap) {
-            ForEach(Array(weeks.enumerated()), id: \.offset) { _, column in
-                VStack(spacing: gap) {
-                    ForEach(column) { day in
-                        cellView(day)
+        ZStack(alignment: .topLeading) {
+            LinearGradient(colors: [card.color, card.color.opacity(0.72)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+
+            Image(systemName: card.icon)
+                .font(.system(size: 58, weight: .semibold))
+                .foregroundColor(.white.opacity(0.16))
+                .rotationEffect(.degrees(-12))
+                .offset(x: 74, y: 48)
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Image(systemName: card.icon)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(card.label.uppercased())
+                        .font(.system(size: 9.5, weight: .heavy)).tracking(0.5)
+                        .foregroundColor(.white.opacity(0.95))
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 6)
+
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(card.value)
+                        .font(.system(size: 30, weight: .heavy))
+                        .foregroundColor(.white)
+                    if let unit = card.unit {
+                        Text(unit)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
                     }
                 }
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+                Text(card.detail)
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
             }
+            .padding(.horizontal, 13)
+            .padding(.vertical, 12)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder
-    private func cellView(_ day: HeatDay) -> some View {
-        if day.future {
-            Color.clear.frame(width: cell, height: cell)
-        } else if let score = day.score {
-            let color = Aura.scoreColor(score)
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .fill(LinearGradient(colors: [color, color.opacity(0.78)],
-                                     startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(width: cell, height: cell)
-                .shadow(color: score >= 80 ? color.opacity(0.55) : .clear, radius: 4)
-                .overlay(todayRing(day.isToday))
-                .contentShape(Rectangle())
-                .onTapGesture { onTap(day.date) }
-        } else {
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .fill(Aura.softFill)
-                .frame(width: cell, height: cell)
-                .overlay(todayRing(day.isToday))
-        }
-    }
-
-    @ViewBuilder
-    private func todayRing(_ isToday: Bool) -> some View {
-        if isToday {
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .stroke(Aura.accent, lineWidth: 1.6)
-        }
+        .frame(width: 142, height: 116)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
+        .shadow(color: card.color.opacity(0.3), radius: 10, y: 5)
     }
 }
 
-// MARK: - Score wave (hero sparkline)
+// MARK: - Day mix donut
 
-/// A smooth gradient area chart of daily scores — the hero's flowing "pulse".
-struct ScoreWave: View {
-    let scores: [Double]     // 0…100
-    let tint: Color
+struct MixSegment: Identifiable {
+    var id: String { label }
+    let color: Color
+    let label: String
+    let range: String
+    let count: Int
+}
+
+/// A segmented ring showing how the last 30 days split across score bands.
+struct DayMixDonut: View {
+    let segments: [MixSegment]
+    let centerValue: String
+    let centerLabel: String
+
+    @State private var drawn = false
+
+    private let lineWidth: CGFloat = 15
+    /// Small visual gap between neighbouring segments.
+    private let gap: CGFloat = 0.006
+
+    private var total: Int { max(segments.reduce(0) { $0 + $1.count }, 1) }
 
     var body: some View {
-        GeometryReader { geo in
-            let pts = points(w: geo.size.width, h: geo.size.height)
-            ZStack {
-                // baseline
-                Path { p in
-                    p.move(to: CGPoint(x: 0, y: geo.size.height - 1))
-                    p.addLine(to: CGPoint(x: geo.size.width, y: geo.size.height - 1))
-                }
-                .stroke(Aura.hairline, lineWidth: 1)
+        ZStack {
+            Circle()
+                .stroke(Aura.softFill, lineWidth: lineWidth)
 
-                areaPath(pts, height: geo.size.height)
-                    .fill(LinearGradient(colors: [tint.opacity(0.34), tint.opacity(0.02)],
-                                         startPoint: .top, endPoint: .bottom))
-                linePath(pts)
-                    .stroke(LinearGradient(colors: [tint, tint.opacity(0.7)], startPoint: .leading, endPoint: .trailing),
-                            style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+            ForEach(Array(segments.enumerated()), id: \.element.id) { index, segment in
+                let bounds = range(at: index)
+                Circle()
+                    .trim(from: bounds.start, to: drawn ? bounds.end : bounds.start)
+                    .stroke(segment.color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .butt))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 0.55).delay(Double(index) * 0.09), value: drawn)
+            }
 
-                if let last = pts.last {
-                    Circle().fill(tint).frame(width: 8, height: 8)
-                        .shadow(color: tint.opacity(0.8), radius: 4)
-                        .position(last)
-                }
+            VStack(spacing: 0) {
+                Text(centerValue)
+                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .foregroundColor(.primary)
+                    .monospacedDigit()
+                Text(centerLabel)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
         }
+        .onAppear { drawn = true }
     }
 
-    private func points(w: CGFloat, h: CGFloat) -> [CGPoint] {
-        guard scores.count > 1 else {
-            return scores.isEmpty ? [] : [CGPoint(x: w / 2, y: h / 2)]
-        }
-        let n = scores.count
-        let pad: CGFloat = 5
-        return scores.enumerated().map { i, s in
-            let x = w * CGFloat(i) / CGFloat(n - 1)
-            let clamped = CGFloat(min(max(s, 0), 100) / 100)
-            let y = (h - pad) - (h - 2 * pad) * clamped
-            return CGPoint(x: x, y: y)
-        }
-    }
-
-    private func linePath(_ pts: [CGPoint]) -> Path { smooth(pts) }
-
-    private func areaPath(_ pts: [CGPoint], height: CGFloat) -> Path {
-        var p = smooth(pts)
-        if let last = pts.last, let first = pts.first {
-            p.addLine(to: CGPoint(x: last.x, y: height))
-            p.addLine(to: CGPoint(x: first.x, y: height))
-            p.closeSubpath()
-        }
-        return p
-    }
-
-    /// Smooth curve with horizontal control points at segment midpoints.
-    private func smooth(_ pts: [CGPoint]) -> Path {
-        var p = Path()
-        guard let first = pts.first else { return p }
-        p.move(to: first)
-        guard pts.count > 1 else { return p }
-        for i in 1..<pts.count {
-            let prev = pts[i - 1], cur = pts[i]
-            let midX = (prev.x + cur.x) / 2
-            p.addCurve(to: cur,
-                       control1: CGPoint(x: midX, y: prev.y),
-                       control2: CGPoint(x: midX, y: cur.y))
-        }
-        return p
+    /// Start / end of a segment's arc, leaving a hairline gap after it.
+    private func range(at index: Int) -> (start: CGFloat, end: CGFloat) {
+        let before = segments.prefix(index).reduce(0) { $0 + $1.count }
+        let start = CGFloat(before) / CGFloat(total)
+        let raw = start + CGFloat(segments[index].count) / CGFloat(total)
+        return (start, max(start, raw - (raw < 1 ? gap : 0)))
     }
 }

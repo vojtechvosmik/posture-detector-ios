@@ -310,6 +310,8 @@ final class ExerciseSession: ObservableObject {
         success.notificationOccurred(.success)
         timer?.invalidate(); timer = nil
         motion.stop()
+        // Lets the coach compare posture in the hours after a session.
+        PostureSampleStore.shared.recordExercise()
     }
 
     private func updateOverallProgress() {

@@ -461,6 +461,7 @@ class PostureMonitor: NSObject, ObservableObject {
     /// grace timer that eventually fires a notification.
     private func handlePostureTransition(previousStatus: PostureStatus) {
         // Track posture time
+        sessionTracker.currentMode = effectiveMode
         sessionTracker.updatePostureStatus(postureStatus)
 
         // Update background audio based on posture
@@ -470,11 +471,13 @@ class PostureMonitor: NSObject, ObservableObject {
             // Bad posture just started — begin the grace timer
             hapticLight.impactOccurred()
             startBadPostureTimer()
+            sessionTracker.beginEpisode()
         } else if previousStatus != .good && postureStatus == .good {
             // Posture improved — cancel timer and remove notifications
             hapticSuccess.notificationOccurred(.success)
             cancelBadPostureTimer()
             removePostureNotifications()
+            sessionTracker.closeEpisode()
         }
     }
 
