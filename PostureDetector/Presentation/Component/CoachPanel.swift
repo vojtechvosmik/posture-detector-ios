@@ -412,41 +412,49 @@ struct CoachDetailSheet: View {
     }
 }
 
-// MARK: - Home screen one-liner
+// MARK: - Home screen card
 
+/// Same skeleton as the other home cards — `auraCard` shell, copy on the left,
+/// the value on the right — but keeps the coach's own byline, because that is
+/// what marks it as the one card that talks rather than measures.
 struct CoachMiniCard: View {
     let insight: PostureInsight
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 5) {
                 CoachByline()
                 Text(insight.title)
-                    .font(.system(size: 14.5, weight: .semibold)).foregroundColor(.primary)
+                    .font(.system(size: 16, weight: .semibold)).foregroundColor(.primary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(insight.summary)
-                    .font(.system(size: 12.5)).foregroundColor(.secondary)
+                    .font(.system(size: 13)).foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 0)
 
+            // The value sits on the right, the way the score does on Today.
             if let delta = insight.delta {
-                CoachDelta(delta: delta, compact: true)
+                VStack(spacing: 0) {
+                    Image(systemName: delta >= 0 ? "arrow.up.right" : "arrow.down.right")
+                        .font(.system(size: 20, weight: .heavy))
+                    Text("\(delta >= 0 ? "+" : "−")\(abs(delta))")
+                        .font(.system(size: 13, weight: .heavy, design: .rounded))
+                        .monospacedDigit()
+                }
+                .foregroundColor(coachTint(for: delta))
             } else {
                 Image(systemName: insight.icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(coachTint(for: nil))
             }
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.secondary.opacity(0.45))
-                .padding(.leading, 2)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.secondary.opacity(0.4))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .auraCard(padding: 0, cornerRadius: 18)
+        .auraCard()
     }
 }
