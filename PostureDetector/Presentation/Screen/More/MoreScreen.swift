@@ -2,14 +2,16 @@
 //  MoreScreen.swift
 //  PostureDetector
 //
-//  Created by Vojtěch Vošmík on 10.01.2026.
+//  Settings and everything that is not a measurement. A photographic header
+//  carries the identity, and below it nothing but plain grouped rows — the
+//  screen should feel like part of the app, not like a dashboard.
 //
 
 import SwiftUI
 
 struct MoreScreen: View {
-    @ObservedObject private var dataStore = PostureDataStore.shared
     @ObservedObject private var subscriptions = SubscriptionManager.shared
+    @ObservedObject private var dataStore = PostureDataStore.shared
     @State private var showingHowToUse = false
     @State private var showingSupported = false
     @State private var showingTerms = false
@@ -17,514 +19,282 @@ struct MoreScreen: View {
     @State private var showingPaywall = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Subscription Section
-                subscriptionSection
-
-                // Insights Section
-                insightsSection
-
-                // Battery Tip
-                batteryTipSection
-
-                // Help & Info Section
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 22) {
+                proCard
                 helpSection
-
-                // Legal Section
                 legalSection
-
                 #if DEBUG
-                // Debug Section
                 debugSection
                 #endif
-
-                // App Info
-                appInfoSection
+                footer
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 20)
+            .padding(.horizontal, 18)
+            .padding(.top, 10)
+            .padding(.bottom, 30)
         }
-        .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle("More")
-        .navigationBarTitleDisplayMode(.large)
-        .sheet(isPresented: $showingHowToUse) {
-            HowToUseView()
-        }
-        .sheet(isPresented: $showingSupported) {
-            SupportedDevicesView()
-        }
-        .sheet(isPresented: $showingTerms) {
-            TermsOfUseView()
-        }
-        .sheet(isPresented: $showingPrivacy) {
-            PrivacyPolicyView()
-        }
-        .fullScreenCover(isPresented: $showingPaywall) {
-            PaywallView(delayClose: false)
-        }
+        .background(AuraBackground())
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showingHowToUse) { HowToUseView() }
+        .sheet(isPresented: $showingSupported) { SupportedDevicesView() }
+        .sheet(isPresented: $showingTerms) { TermsOfUseView() }
+        .sheet(isPresented: $showingPrivacy) { PrivacyPolicyView() }
+        .fullScreenCover(isPresented: $showingPaywall) { PaywallView(delayClose: false) }
     }
 
-    // MARK: - Subscription Section
+    // MARK: - PRO card
 
-    @ViewBuilder
-    private var subscriptionSection: some View {
-        if subscriptions.isPro {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(colors: [.blue, .blue.opacity(0.6)],
-                                             startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 46, height: 46)
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Postura PRO")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.primary)
-                    Text("Your subscription is active. Thank you!")
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
+    /// Poster-style card in the same language as the exercise cards: a stock
+    /// photo turned right down, a gold wash over it, the signature rings, and
+    /// the copy sitting on top.
+    private var proCard: some View {
+        let content = VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("UNLIMITED")
+                    .font(.system(size: 11, weight: .heavy)).tracking(1.0).foregroundColor(.white)
+                    .padding(.horizontal, 11).padding(.vertical, 6)
+                    .background(Color.white.opacity(0.22), in: Capsule())
+                Spacer()
+            }
+
+            Spacer(minLength: 0)
+
+            Text(subscriptions.isPro ? "All features unlocked" : "Unlock all features")
+                .font(.system(size: 26, weight: .heavy)).foregroundColor(.white)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(subscriptions.isPro
+                 ? "Thanks for supporting the app — everything is unlocked."
+                 : "Unlimited monitoring, the AI coach with full pattern analysis, and custom alerts.")
+                .font(.system(size: 14)).foregroundColor(.white.opacity(0.9))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 3)
+
+            HStack(spacing: 16) {
+                if subscriptions.isPro {
+                    proMeta("checkmark.seal.fill", "Active")
+                } else {
+                    proMeta("gift.fill", "7 days free")
+                    proMeta("xmark.circle", "Cancel anytime")
                 }
                 Spacer()
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 22))
-                    .foregroundColor(.green)
-            }
-            .padding(16)
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-        } else {
-            Button {
-                showingPaywall = true
-            } label: {
-                HStack(spacing: 14) {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient(colors: [.blue, .blue.opacity(0.6)],
-                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 46, height: 46)
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text("Upgrade to")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.primary)
-                            Text("PRO")
-                                .font(.system(size: 12, weight: .heavy))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 2)
-                                .background(Color.blue, in: Capsule())
-                        }
-                        Text("Unlimited tracking, insights & custom alerts")
-                            .font(.system(size: 13))
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.secondary)
+                ZStack {
+                    Circle().fill(Color.white).frame(width: 44, height: 44)
+                        .shadow(color: Color.black.opacity(0.18), radius: 8, y: 3)
+                    Image(systemName: subscriptions.isPro ? "crown.fill" : "arrow.right")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(Self.gold)
                 }
-                .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.blue.opacity(0.35), lineWidth: 1)
-                )
-                .shadow(color: Color.blue.opacity(0.1), radius: 8, x: 0, y: 2)
             }
-            .buttonStyle(.plain)
+            .padding(.top, 14)
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, minHeight: 214, alignment: .leading)
+        .background(proBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .shadow(color: Self.gold.opacity(0.35), radius: 16, y: 8)
+
+        return Group {
+            if subscriptions.isPro {
+                content
+            } else {
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showingPaywall = true
+                } label: { content }
+                .buttonStyle(ExercisePressStyle())
+            }
         }
     }
 
-    // MARK: - Battery Tip Section
+    /// Gold wash over a barely-there photo, plus the concentric rings.
+    private var proBackground: some View {
+        ZStack {
+            Image("morePhotoPro")
+                .resizable()
+                .scaledToFill()
+                .opacity(0.75)
 
-    @ViewBuilder
-    private var batteryTipSection: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 20))
-                .foregroundColor(.yellow)
-                .frame(width: 32)
+            // Thin enough that the photo still reads as texture underneath.
+            LinearGradient(colors: [Self.goldLight.opacity(0.80), Self.gold.opacity(0.86)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [Color.white.opacity(0.08), Color.black.opacity(0.28)],
+                           startPoint: .top, endPoint: .bottom)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Battery Optimization")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-
-                Text("Background monitoring uses more battery. Consider monitoring during work hours only.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            ZStack {
+                ForEach(0..<3) { index in
+                    Circle().stroke(Color.white.opacity(0.16), lineWidth: 1.5)
+                        .frame(width: 92 + CGFloat(index) * 62, height: 92 + CGFloat(index) * 62)
+                }
             }
-        }
-        .padding(12)
-        .background(Color.yellow.opacity(0.1))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-        )
-        .padding(.horizontal, 20)
-    }
+            .offset(x: 118, y: -76)
 
-    // MARK: - Insights Section
+            Circle().fill(Color.white).frame(width: 130, height: 130).blur(radius: 55).opacity(0.20)
+                .offset(x: 128, y: -66)
 
-    @ViewBuilder
-    private var insightsSection: some View {
-        VStack(spacing: 12) {
-            SectionHeader(title: "Insights", icon: "chart.bar.fill")
-
-            VStack(spacing: 8) {
-                InsightRow(
-                    icon: "calendar",
-                    title: "Total Days Tracked",
-                    value: "\(dataStore.allHistory.filter { $0.totalMonitoredSeconds > 0 }.count)"
-                )
-
-                InsightRow(
-                    icon: "clock.fill",
-                    title: "Total Monitoring Time",
-                    value: formatTotalTime()
-                )
-
-                InsightRow(
-                    icon: "chart.line.uptrend.xyaxis",
-                    title: "Average Score",
-                    value: "\(calculateAverageScore())"
-                )
-
-                InsightRow(
-                    icon: "exclamationmark.triangle.fill",
-                    title: "Total Alerts",
-                    value: "\(dataStore.allHistory.reduce(0) { $0 + $1.alertCount })"
-                )
-            }
-            .padding()
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+            Image(systemName: "crown.fill")
+                .font(.system(size: 118, weight: .semibold))
+                .foregroundColor(Color.white.opacity(0.10))
+                .rotationEffect(.degrees(-12))
+                .offset(x: 108, y: 52)
         }
     }
 
-    // MARK: - Help Section
+    private func proMeta(_ icon: String, _ text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 12, weight: .semibold))
+            Text(text).font(.system(size: 13, weight: .semibold))
+        }
+        .foregroundColor(.white.opacity(0.92))
+    }
 
-    @ViewBuilder
+    private static let gold = Color(red: 0.78, green: 0.56, blue: 0.16)
+    private static let goldLight = Color(red: 0.94, green: 0.76, blue: 0.34)
+
+    // MARK: - Sections
+
     private var helpSection: some View {
-        VStack(spacing: 12) {
-            SectionHeader(title: "Help & Info", icon: "questionmark.circle.fill")
-
-            VStack(spacing: 0) {
-                SettingsRow(
-                    icon: "book.fill",
-                    title: "How to Use",
-                    iconColor: .blue
-                ) {
-                    showingHowToUse = true
-                }
-
-                Divider()
-                    .padding(.leading, 52)
-
-                SettingsRow(
-                    icon: "airpodspro",
-                    title: "Supported Devices",
-                    iconColor: .purple
-                ) {
-                    showingSupported = true
-                }
-
-                Divider()
-                    .padding(.leading, 52)
-
-                SettingsRow(
-                    icon: "envelope.fill",
-                    title: "Contact Support",
-                    iconColor: .green
-                ) {
+        MoreSection("HELP") {
+            MoreCard {
+                MoreRow(icon: "book.fill", title: "How to use") { showingHowToUse = true }
+                MoreDivider()
+                MoreRow(icon: "airpodspro", title: "Supported devices") { showingSupported = true }
+                MoreDivider()
+                MoreRow(icon: "envelope.fill", title: "Contact support") {
                     if let url = URL(string: "mailto:support@posturedetector.app") {
                         UIApplication.shared.open(url)
                     }
                 }
             }
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
     }
 
-    // MARK: - Legal Section
-
-    @ViewBuilder
     private var legalSection: some View {
-        VStack(spacing: 12) {
-            SectionHeader(title: "Legal", icon: "doc.text.fill")
-
-            VStack(spacing: 0) {
-                SettingsRow(
-                    icon: "doc.plaintext.fill",
-                    title: "Terms of Use",
-                    iconColor: .orange
-                ) {
-                    showingTerms = true
-                }
-
-                Divider()
-                    .padding(.leading, 52)
-
-                SettingsRow(
-                    icon: "lock.shield.fill",
-                    title: "Privacy Policy",
-                    iconColor: .red
-                ) {
-                    showingPrivacy = true
-                }
+        MoreSection("LEGAL") {
+            MoreCard {
+                MoreRow(icon: "doc.plaintext.fill", title: "Terms of use") { showingTerms = true }
+                MoreDivider()
+                MoreRow(icon: "lock.shield.fill", title: "Privacy policy") { showingPrivacy = true }
             }
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
     }
-
-    // MARK: - Debug Section
 
     #if DEBUG
-    @ViewBuilder
     private var debugSection: some View {
-        VStack(spacing: 12) {
-            SectionHeader(title: "Debug Tools", icon: "hammer.fill")
-
-            VStack(spacing: 0) {
+        MoreSection("DEBUG") {
+            MoreCard {
                 NavigationLink(destination: PostureDebugScreen()) {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.green.opacity(0.15))
-                                .frame(width: 32, height: 32)
-
-                            Image(systemName: "waveform.path.ecg")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.green)
-                        }
-
-                        Text("Live Monitor")
-                            .font(.system(size: 15))
-                            .foregroundColor(.primary)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.gray.opacity(0.5))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    MoreRowContent(icon: "waveform.path.ecg", title: "Live monitor")
                 }
-
-                Divider()
-                    .padding(.leading, 52)
-
+                .buttonStyle(.plain)
+                MoreDivider()
                 NavigationLink(destination: DebugLogsScreen()) {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.orange.opacity(0.15))
-                                .frame(width: 32, height: 32)
-
-                            Image(systemName: "doc.text.fill")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.orange)
-                        }
-
-                        Text("Debug Logs")
-                            .font(.system(size: 15))
-                            .foregroundColor(.primary)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.gray.opacity(0.5))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    MoreRowContent(icon: "doc.text.fill", title: "Debug logs")
                 }
-
-                Divider()
-                    .padding(.leading, 52)
-
-                SettingsRow(
-                    icon: "photo.fill",
-                    title: "Fill Sample Data",
-                    iconColor: .purple
-                ) {
+                .buttonStyle(.plain)
+                MoreDivider()
+                MoreRow(icon: "wand.and.stars", title: "Fill sample data") {
                     dataStore.fillWithSampleData()
+                    PostureSampleStore.shared.seedDemoSamples()
                 }
-
-                Divider()
-                    .padding(.leading, 52)
-
-                SettingsRow(
-                    icon: "trash.fill",
-                    title: "Clear All Data",
-                    iconColor: .red
-                ) {
+                MoreDivider()
+                MoreRow(icon: "trash.fill", title: "Clear all data") {
                     dataStore.clearAllData()
+                    PostureSampleStore.shared.clearSamples()
                 }
             }
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
     }
     #endif
 
-    // MARK: - App Info
-
-    @ViewBuilder
-    private var appInfoSection: some View {
-        VStack(spacing: 8) {
-            Text("Posture Detector")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
-
-            Text("Version 1.0.0")
-                .font(.system(size: 13))
-                .foregroundColor(.gray)
-
-            Text("Made with ❤️ for better posture")
-                .font(.system(size: 12))
-                .foregroundColor(.gray)
-                .padding(.top, 4)
+    private var footer: some View {
+        VStack(spacing: 4) {
+            Text("Postura \(appVersion)")
+                .font(.system(size: 12, weight: .medium)).foregroundColor(.secondary)
+            Text("Made for better posture")
+                .font(.system(size: 11)).foregroundColor(.secondary.opacity(0.7))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .padding(.top, 4)
     }
 
-    // MARK: - Helper Methods
-
-    private func formatTotalTime() -> String {
-        let totalSeconds = dataStore.allHistory.reduce(0) { $0 + $1.totalMonitoredSeconds }
-        let hours = Int(totalSeconds) / 3600
-        let minutes = (Int(totalSeconds) % 3600) / 60
-
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
-        } else {
-            return "\(minutes)m"
-        }
-    }
-
-    private func calculateAverageScore() -> Int {
-        let validHistory = dataStore.allHistory.filter { $0.totalMonitoredSeconds > 0 }
-        guard !validHistory.isEmpty else { return 0 }
-        let total = validHistory.reduce(0) { $0 + $1.score }
-        return total / validHistory.count
+    private var appVersion: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        return version.map { "v\($0)" } ?? ""
     }
 }
 
-// MARK: - Supporting Views
+// MARK: - Building blocks
 
-struct SectionHeader: View {
+/// A labelled group. Every section on the screen is one of these.
+private struct MoreSection<Content: View>: View {
     let title: String
-    let icon: String
+    @ViewBuilder let content: Content
+
+    init(_ title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
 
     var body: some View {
-        HStack {
-            /*Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.primary)*/
-
+        VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.primary)
-
-            Spacer()
+                .font(.system(size: 9.5, weight: .heavy)).tracking(1.2)
+                .foregroundColor(.secondary)
+            content
         }
     }
 }
 
-struct InsightRow: View {
-    let icon: String
-    let title: String
-    let value: String
+private struct MoreCard<Content: View>: View {
+    @ViewBuilder let content: Content
 
     var body: some View {
-        HStack(spacing: 12) {
+        VStack(spacing: 0) { content }
+            .auraCard(padding: 0, cornerRadius: 18)
+    }
+}
+
+private struct MoreDivider: View {
+    var body: some View {
+        Rectangle().fill(Aura.hairline).frame(height: 1).padding(.leading, 58)
+    }
+}
+
+private struct MoreRowContent: View {
+    let icon: String
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 13) {
             Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundColor(.blue)
-                .frame(width: 24)
-
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.secondary)
+                .frame(width: 30, height: 30)
+                .background(Aura.softFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
             Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(.primary)
-
-            Spacer()
-
-            Text(value)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
+                .font(.system(size: 15, weight: .medium)).foregroundColor(.primary)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.secondary.opacity(0.45))
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
     }
 }
 
-struct SettingsRow: View {
+private struct MoreRow: View {
     let icon: String
     let title: String
-    let iconColor: Color
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(iconColor.opacity(0.15))
-                        .frame(width: 32, height: 32)
-
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(iconColor)
-                }
-
-                Text(title)
-                    .font(.system(size: 15))
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.gray.opacity(0.5))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
+        Button(action: action) { MoreRowContent(icon: icon, title: title) }
+            .buttonStyle(.plain)
     }
 }
-//
-//  HowToUseView.swift
-//  PostureDetector
-//
-//  How to use the app guide
-//
-
-import SwiftUI
 
 struct HowToUseView: View {
     @Environment(\.dismiss) private var dismiss
