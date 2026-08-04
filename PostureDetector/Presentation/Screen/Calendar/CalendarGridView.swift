@@ -16,12 +16,13 @@ struct CalendarGridView: View {
     let onDayTapped: (Date) -> Void
 
     private let calendar = Calendar.current
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
 
     var body: some View {
+        // Deliberately not a LazyVGrid: six rows of seven cells cost nothing to
+        // keep alive, and laziness meant the grid was being torn down and
+        // rebuilt on scroll — which is what made the days vanish.
         VStack(spacing: 10) {
-            // Weekday headers
-            LazyVGrid(columns: columns, spacing: 4) {
+            HStack(spacing: 4) {
                 ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { index, symbol in
                     Text(symbol.prefix(2).uppercased())
                         .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -32,26 +33,38 @@ struct CalendarGridView: View {
             }
             .padding(.bottom, 2)
 
-            // Day rings
-            LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(Array(daysInMonth.enumerated()), id: \.offset) { index, date in
-                    if let date = date {
-                        RingDayCell(
-                            date: date,
-                            history: historyForDate(date),
-                            isToday: calendar.isDateInToday(date),
-                            isFuture: date > calendar.startOfDay(for: Date()),
-                            delay: Double(index) * 0.02
-                        )
-                        .onTapGesture { onDayTapped(date) }
-                    } else {
-                        Color.clear.frame(height: RingDayCell.height)
+            VStack(spacing: 4) {
+                ForEach(Array(weeks.enumerated()), id: \.offset) { weekIndex, week in
+                    HStack(spacing: 4) {
+                        ForEach(Array(week.enumerated()), id: \.offset) { dayIndex, date in
+                            if let date = date {
+                                RingDayCell(
+                                    date: date,
+                                    history: historyForDate(date),
+                                    isToday: calendar.isDateInToday(date),
+                                    isFuture: date > calendar.startOfDay(for: Date()),
+                                    delay: Double(weekIndex * 7 + dayIndex) * 0.02
+                                )
+                                .onTapGesture { onDayTapped(date) }
+                            } else {
+                                Color.clear
+                                    .frame(height: RingDayCell.height)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
                     }
                 }
             }
         }
         // A fresh identity per month, so paging replays the sweep.
         .id(monthKey)
+    }
+
+    /// The month laid out as rows of seven.
+    private var weeks: [[Date?]] {
+        stride(from: 0, to: daysInMonth.count, by: 7).map { start in
+            Array(daysInMonth[start..<min(start + 7, daysInMonth.count)])
+        }
     }
 
     private var monthKey: String {
