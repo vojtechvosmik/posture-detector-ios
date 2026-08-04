@@ -357,6 +357,10 @@ struct HomeScreen: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            // The scroll view clips its content, so the cards' coloured glow
+            // needs room inside it: the viewport is pushed out past the page
+            // margin and the row inset by the same amount, which leaves the
+            // cards exactly where they were with the shadow intact.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(NeckExercise.all) { exercise in
@@ -364,8 +368,12 @@ struct HomeScreen: View {
                             .buttonStyle(.plain)
                     }
                 }
-                .padding(.vertical, 3)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 22)
             }
+            .padding(.horizontal, -16)
+            .padding(.bottom, -14)
         }
     }
 

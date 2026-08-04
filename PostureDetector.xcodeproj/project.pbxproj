@@ -55,6 +55,8 @@
 		B5AFD950C005FABBE877C9C9 /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EF2F41661C8BCFE935ACD7 /* CalibrationStore.swift */; };
 		BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9114C582224BAE4D6A659DE /* ToggleMonitoringIntent.swift */; };
 		C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */; };
+		8CAA10142F1230AC00DAA24B /* WalkDetectionDebugScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10132F1230AC00DAA24B /* WalkDetectionDebugScreen.swift */; };
+		8CAA10122F1230AC00DAA24B /* DebugDataScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10112F1230AC00DAA24B /* DebugDataScreen.swift */; };
 		D163E0A9218BFF3DB425491A /* OnboardingMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC4C71EE0172B6C7AF74274A /* OnboardingMotionManager.swift */; };
 		A1000102 /* ExerciseScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000101 /* ExerciseScreen.swift */; };
 /* End PBXBuildFile section */
@@ -87,6 +89,8 @@
 		0C4ED556DF68F89DE09423DB /* BackgroundAudioManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundAudioManager.swift; sourceTree = "<group>"; };
 		11EF2F41661C8BCFE935ACD7 /* CalibrationStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalibrationStore.swift; sourceTree = "<group>"; };
 		2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DebugLogsScreen.swift; path = Debug/DebugLogsScreen.swift; sourceTree = "<group>"; };
+		8CAA10132F1230AC00DAA24B /* WalkDetectionDebugScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WalkDetectionDebugScreen.swift; path = Debug/WalkDetectionDebugScreen.swift; sourceTree = "<group>"; };
+		8CAA10112F1230AC00DAA24B /* DebugDataScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugDataScreen.swift; path = Debug/DebugDataScreen.swift; sourceTree = "<group>"; };
 		66D0E2044CE139A8EE341C4F /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		8C9D4E9C2F11836900DAA24B /* PostureLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PostureLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C9D4E9E2F11836900DAA24B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -375,6 +379,8 @@
 			isa = PBXGroup;
 			children = (
 				2140421D8FFFCBAB9DB41B02 /* DebugLogsScreen.swift */,
+				8CAA10132F1230AC00DAA24B /* WalkDetectionDebugScreen.swift */,
+				8CAA10112F1230AC00DAA24B /* DebugDataScreen.swift */,
 			);
 			name = Debug;
 			sourceTree = "<group>";
@@ -525,6 +531,8 @@
 				8CD3D1D82F12DF81000A9C3C /* CalendarGridView.swift in Sources */,
 				8CD3D1D92F12DF81000A9C3C /* DayDetailView.swift in Sources */,
 				C537B9BA6862165812E97720 /* DebugLogsScreen.swift in Sources */,
+				8CAA10142F1230AC00DAA24B /* WalkDetectionDebugScreen.swift in Sources */,
+				8CAA10122F1230AC00DAA24B /* DebugDataScreen.swift in Sources */,
 				8E7D6D39B075DC37F32FB1EB /* DebugLogger.swift in Sources */,
 				25E0349F25B3483E68EA8F4B /* BackgroundAudioManager.swift in Sources */,
 				BAB321369B7EBD8361EE4264 /* ToggleMonitoringIntent.swift in Sources */,

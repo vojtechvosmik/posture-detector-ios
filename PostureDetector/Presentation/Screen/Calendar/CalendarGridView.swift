@@ -15,8 +15,6 @@ struct CalendarGridView: View {
     let history: [PostureHistory]
     let onDayTapped: (Date) -> Void
 
-    @State private var drawn = false
-
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
 
@@ -43,7 +41,6 @@ struct CalendarGridView: View {
                             history: historyForDate(date),
                             isToday: calendar.isDateInToday(date),
                             isFuture: date > calendar.startOfDay(for: Date()),
-                            drawn: drawn,
                             delay: Double(index) * 0.02
                         )
                         .onTapGesture { onDayTapped(date) }
@@ -53,14 +50,8 @@ struct CalendarGridView: View {
                 }
             }
         }
-        .onAppear { drawn = true }
-        .onChange(of: monthKey) { _ in
-            // Redraw the sweep whenever the user pages to another month.
-            drawn = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
-                drawn = true
-            }
-        }
+        // A fresh identity per month, so paging replays the sweep.
+        .id(monthKey)
     }
 
     private var monthKey: String {
@@ -129,8 +120,11 @@ private struct RingDayCell: View {
     let history: PostureHistory?
     let isToday: Bool
     let isFuture: Bool
-    let drawn: Bool
     let delay: Double
+
+    /// Drives the arc only. Never gates visibility: a cell that gets recycled
+    /// by the lazy grid must come back fully drawn, not blank.
+    @State private var drawn = false
 
     static let height: CGFloat = 54
     private let ring: CGFloat = 42
@@ -156,7 +150,7 @@ private struct RingDayCell: View {
                                        startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
                     .frame(width: ring - 2 * lineWidth - 2, height: ring - 2 * lineWidth - 2)
-                    .shadow(color: Aura.accent.opacity(0.5), radius: 7, y: 1)
+                    .shadow(color: Aura.accent.opacity(0.28), radius: 4, y: 1)
             }
 
             // Track — accent-tinted on today so it reads even behind a full arc
@@ -180,8 +174,7 @@ private struct RingDayCell: View {
                     )
                     .rotationEffect(.degrees(-90))
                     .frame(width: ring, height: ring)
-                    .shadow(color: isGreat ? color.opacity(0.55) : .clear, radius: 5)
-                    .animation(.easeOut(duration: 0.65).delay(delay), value: drawn)
+                    .shadow(color: isGreat ? color.opacity(0.28) : .clear, radius: 2.5)
             }
 
             // Day number
@@ -194,9 +187,12 @@ private struct RingDayCell: View {
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
         .opacity(isFuture ? 0.28 : 1)
-        .scaleEffect(drawn ? 1 : 0.8)
-        .animation(.spring(response: 0.45, dampingFraction: 0.7).delay(delay), value: drawn)
         .contentShape(Circle())
+        .onAppear {
+            guard !drawn else { return }
+            // A clean sweep from zero — no pop, just the arc drawing itself in.
+            withAnimation(.easeOut(duration: 0.85).delay(delay)) { drawn = true }
+        }
     }
 
     private var numberColor: Color {

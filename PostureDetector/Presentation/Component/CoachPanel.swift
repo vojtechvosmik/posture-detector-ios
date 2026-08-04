@@ -230,6 +230,16 @@ struct CoachPanel: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .auraCard(padding: 17, cornerRadius: 22)
+        // Same corner bracket as the home card, sized to this card's radius.
+        .overlay(alignment: .topLeading) {
+            CoachCornerAccent(radius: 22, arm: 44)
+                .stroke(
+                    LinearGradient(colors: [Aura.violet.opacity(0.85), Aura.accent.opacity(0)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    style: StrokeStyle(lineWidth: 1.8, lineCap: .round)
+                )
+                .allowsHitTesting(false)
+        }
     }
 }
 
@@ -456,5 +466,37 @@ struct CoachMiniCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .auraCard()
+        // Just the one corner: a short gradient bracket that fades out into the
+        // normal card edge, next to the sparkle.
+        .overlay(alignment: .topLeading) {
+            CoachCornerAccent(radius: 24, arm: 44)
+                .stroke(
+                    LinearGradient(colors: [Aura.violet.opacity(0.85), Aura.accent.opacity(0)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    style: StrokeStyle(lineWidth: 1.8, lineCap: .round)
+                )
+                .allowsHitTesting(false)
+        }
+    }
+}
+
+/// The top-left corner of the card, drawn as a short bracket: down the arc and
+/// a little way along each edge, so it can be stroked on its own.
+private struct CoachCornerAccent: Shape {
+    var radius: CGFloat
+    var arm: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let inset: CGFloat = 0.9
+        var path = Path()
+        path.move(to: CGPoint(x: radius + arm, y: inset))
+        path.addLine(to: CGPoint(x: radius, y: inset))
+        path.addArc(center: CGPoint(x: radius, y: radius),
+                    radius: radius - inset,
+                    startAngle: .degrees(-90),
+                    endAngle: .degrees(180),
+                    clockwise: true)
+        path.addLine(to: CGPoint(x: inset, y: radius + arm))
+        return path
     }
 }

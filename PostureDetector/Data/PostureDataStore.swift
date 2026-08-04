@@ -211,6 +211,23 @@ class PostureDataStore: ObservableObject {
         print("✅ Database filled with 30 days of sample data")
     }
 
+    /// Replaces the whole history — the debug scenarios build their own.
+    func replaceHistory(_ history: [PostureHistory]) {
+        let calendar = Calendar.current
+        allHistory = history.sorted { $0.date > $1.date }
+        todayHistory = allHistory.first(where: { calendar.isDateInToday($0.date) })
+            ?? PostureHistory(date: Date())
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()) {
+            yesterdayHistory = allHistory.first(where: { calendar.isDate($0.date, inSameDayAs: yesterday) })
+        } else {
+            yesterdayHistory = nil
+        }
+        if let encoded = try? JSONEncoder().encode(allHistory) {
+            userDefaults.set(encoded, forKey: historyKey)
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
     /// Clear all data
     func clearAllData() {
         allHistory = []

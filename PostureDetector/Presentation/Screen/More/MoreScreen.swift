@@ -183,6 +183,16 @@ struct MoreScreen: View {
     private var debugSection: some View {
         MoreSection("DEBUG") {
             MoreCard {
+                NavigationLink(destination: DebugDataScreen()) {
+                    MoreRowContent(icon: "wand.and.stars", title: "Sample data scenarios")
+                }
+                .buttonStyle(.plain)
+                MoreDivider()
+                NavigationLink(destination: WalkDetectionDebugScreen()) {
+                    MoreRowContent(icon: "figure.walk.motion", title: "Walk detection")
+                }
+                .buttonStyle(.plain)
+                MoreDivider()
                 NavigationLink(destination: PostureDebugScreen()) {
                     MoreRowContent(icon: "waveform.path.ecg", title: "Live monitor")
                 }
@@ -192,11 +202,6 @@ struct MoreScreen: View {
                     MoreRowContent(icon: "doc.text.fill", title: "Debug logs")
                 }
                 .buttonStyle(.plain)
-                MoreDivider()
-                MoreRow(icon: "wand.and.stars", title: "Fill sample data") {
-                    dataStore.fillWithSampleData()
-                    PostureSampleStore.shared.seedDemoSamples()
-                }
                 MoreDivider()
                 MoreRow(icon: "trash.fill", title: "Clear all data") {
                     dataStore.clearAllData()

@@ -45,8 +45,8 @@ struct CalendarScreen: View {
                 VStack(alignment: .leading, spacing: 26) {
                     calendarSection
                     coachSection
-                    statDeck
-                    dayMix
+                    records
+                    scoreMix
                 }
                 .padding(.top, 4)
                 .padding(.bottom, 34)
@@ -163,120 +163,115 @@ struct CalendarScreen: View {
         }
     }
 
-    // MARK: - Stat deck (swipe through the highlights)
+    // MARK: - Records
 
-    private var statDeck: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Highlights")
-                .font(.system(size: 20, weight: .bold)).foregroundColor(.primary)
-                .padding(.horizontal, 20)
+    /// Personal bests rather than another set of averages — the coach panel
+    /// above already carries the running numbers.
+    private var records: some View {
+        CalSection("RECORDS") {
+            VStack(spacing: 10) {
+                HStack(spacing: 10) {
+                    RecordTile(icon: "trophy.fill",
+                               value: bestDay.map { "\($0.score)" } ?? "–",
+                               label: "Best day",
+                               caption: bestDay.map { dayLabel($0.date) } ?? "No sessions yet",
+                               tint: bestDay.map { Aura.scoreColor($0.score) } ?? .secondary)
+                    RecordTile(icon: "flame.fill",
+                               value: longestStreak > 0 ? "\(longestStreak)" : "–",
+                               label: longestStreak == 1 ? "Day in a row" : "Days in a row",
+                               caption: streak == longestStreak && streak > 0 ? "Running now" : "Longest run",
+                               tint: Aura.orange)
+                }
+                HStack(spacing: 10) {
+                    RecordTile(icon: "clock.fill",
+                               value: longestUprightDay.map { uprightText($0.goodPostureSeconds) } ?? "–",
+                               label: "Most upright",
+                               caption: longestUprightDay.map { dayLabel($0.date) } ?? "In one day",
+                               tint: Aura.green)
+                    RecordTile(icon: "checkmark.seal.fill",
+                               value: "\(trackedDays.count)",
+                               label: trackedDays.count == 1 ? "Session" : "Sessions",
+                               caption: "Since you started",
+                               tint: Aura.accent)
+                }
+            }
+        }
+        .padding(.horizontal, 18)
+    }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(deckCards) { card in
-                        StatDeckCard(card: card)
+    // MARK: - Score mix
+
+    /// How the last thirty days split across the score bands, as one bar.
+    private var scoreMix: some View {
+        CalSection("SCORE MIX") {
+            VStack(alignment: .leading, spacing: 14) {
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        ForEach(mixBands) { band in
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(band.color)
+                                .frame(width: max(band.count == 0 ? 0 : 4,
+                                                  (geo.size.width - 6) * CGFloat(band.count) / 30))
+                        }
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 4)
-            }
-        }
-    }
+                .frame(height: 14)
 
-    private var deckCards: [DeckCard] {
-        var cards: [DeckCard] = [
-            DeckCard(icon: "waveform.path.ecg", color: Aura.scoreColor(avg30),
-                     value: "\(avg30)", unit: nil,
-                     label: "30-day average", detail: trendText),
-            DeckCard(icon: "checkmark.seal.fill", color: Aura.accent,
-                     value: "\(consistency)", unit: "%",
-                     label: "Consistency", detail: "\(daysTracked30) of the last 30 days"),
-            DeckCard(icon: "flame.fill", color: Aura.orange,
-                     value: "\(streak)", unit: streak == 1 ? "day" : "days",
-                     label: "Current streak",
-                     detail: longestStreak > streak ? "Best run \(longestStreak) days" : "Your best run yet"),
-            DeckCard(icon: "clock.fill", color: Aura.violet,
-                     value: uprightValue, unit: uprightUnit,
-                     label: "Upright time", detail: "Good posture, last 30 days")
-        ]
-
-        if let best = bestDay {
-            cards.append(DeckCard(icon: "trophy.fill", color: Aura.green,
-                                  value: "\(best.score)", unit: nil,
-                                  label: "Personal best", detail: dayLabel(best.date)))
-        }
-        if alertsPerDay > 0 {
-            cards.append(DeckCard(icon: "bell.badge.fill", color: Aura.coral,
-                                  value: String(format: "%.1f", alertsPerDay), unit: "/day",
-                                  label: "Slouch alerts", detail: "Average while tracking"))
-        }
-        return cards
-    }
-
-    // MARK: - Day mix (how the last 30 days landed)
-
-    private var dayMix: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Last 30 days")
-                    .font(.system(size: 20, weight: .bold)).foregroundColor(.primary)
-                Spacer(minLength: 8)
-                Text(mixHeadline)
-                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.secondary)
-            }
-
-            HStack(spacing: 20) {
-                DayMixDonut(segments: mixSegments,
-                            centerValue: "\(daysTracked30)",
-                            centerLabel: "of 30 days")
-                    .frame(width: 128, height: 128)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(mixSegments) { segment in
-                        HStack(spacing: 9) {
-                            Circle().fill(segment.color)
-                                .overlay(Circle().stroke(Aura.hairline, lineWidth: 1))
-                                .frame(width: 9, height: 9)
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text(segment.label)
-                                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.primary)
-                                Text(segment.range)
-                                    .font(.system(size: 10.5)).foregroundColor(.secondary)
-                            }
-                            Spacer(minLength: 6)
-                            Text("\(segment.count)")
-                                .font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                                .monospacedDigit()
+                // Legend, wrapped into two rows so the labels stay readable.
+                VStack(spacing: 8) {
+                    HStack(spacing: 0) {
+                        ForEach(mixBands.prefix(2)) { band in
+                            mixLegend(band)
+                        }
+                    }
+                    HStack(spacing: 0) {
+                        ForEach(mixBands.suffix(2)) { band in
+                            mixLegend(band)
                         }
                     }
                 }
             }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .auraCard(padding: 0, cornerRadius: 18)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .calCard()
         .padding(.horizontal, 18)
     }
 
-    /// Counts of great / good / rough / untracked days over the last 30.
-    private var mixSegments: [MixSegment] {
+    private func mixLegend(_ band: MixBand) -> some View {
+        HStack(spacing: 7) {
+            RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+                .fill(band.color)
+                .frame(width: 9, height: 9)
+            Text(band.label)
+                .font(.system(size: 12.5)).foregroundColor(.secondary)
+            Text("\(band.count)")
+                .font(.system(size: 12.5, weight: .bold)).foregroundColor(.primary)
+                .monospacedDigit()
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var mixBands: [MixBand] {
         let scores = trackedScores(daysAgo: 0..<30)
-        let great = scores.filter { $0 >= 80 }.count
-        let good = scores.filter { $0 >= 60 && $0 < 80 }.count
-        let rough = scores.filter { $0 < 60 }.count
         return [
-            MixSegment(color: Aura.green,  label: "Great",      range: "80 and up", count: great),
-            MixSegment(color: Aura.orange, label: "Good",       range: "60 – 79",   count: good),
-            MixSegment(color: Aura.coral,  label: "Needs work", range: "under 60",  count: rough),
-            MixSegment(color: Aura.softFill, label: "Untracked", range: "no session", count: 30 - scores.count)
+            MixBand(label: "Great", color: Aura.green, count: scores.filter { $0 >= 80 }.count),
+            MixBand(label: "Good", color: Aura.orange, count: scores.filter { $0 >= 60 && $0 < 80 }.count),
+            MixBand(label: "Needs work", color: Aura.coral, count: scores.filter { $0 < 60 }.count),
+            MixBand(label: "Untracked", color: Aura.softFill, count: 30 - scores.count)
         ]
     }
 
-    private var mixHeadline: String {
-        let segments = mixSegments.dropLast()          // ignore untracked
-        guard let top = segments.max(by: { $0.count < $1.count }), top.count > 0 else {
-            return "No sessions yet"
-        }
-        return "Mostly \(top.label.lowercased()) days"
+    private var longestUprightDay: PostureHistory? {
+        trackedDays.max(by: { $0.goodPostureSeconds < $1.goodPostureSeconds })
+    }
+
+    private func uprightText(_ seconds: TimeInterval) -> String {
+        let hours = seconds / 3600
+        if hours >= 10 { return "\(Int(hours))h" }
+        if hours >= 1 { return String(format: "%.1fh", hours) }
+        return "\(Int(seconds / 60))m"
     }
 
     // MARK: - Empty state
@@ -442,137 +437,65 @@ extension InsightTone {
     }
 }
 
-// MARK: - Stat deck
+// MARK: - Building blocks
 
-struct DeckCard: Identifiable {
-    let id = UUID()
+/// Section label + content, matching the coach sections.
+private struct CalSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    init(_ title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 9.5, weight: .heavy)).tracking(1.2)
+                .foregroundColor(.secondary)
+            content
+        }
+    }
+}
+
+/// One personal best: glyph, number, what it is, and when it happened.
+private struct RecordTile: View {
     let icon: String
-    let color: Color
     let value: String
-    let unit: String?
     let label: String
-    let detail: String
-}
-
-/// One card in the highlight deck: a compact gradient tile with a glyph
-/// watermark behind the number.
-private struct StatDeckCard: View {
-    let card: DeckCard
+    let caption: String
+    let tint: Color
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            LinearGradient(colors: [card.color, card.color.opacity(0.72)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(tint)
+                .frame(width: 26, height: 26)
+                .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            Image(systemName: card.icon)
-                .font(.system(size: 58, weight: .semibold))
-                .foregroundColor(.white.opacity(0.16))
-                .rotationEffect(.degrees(-12))
-                .offset(x: 74, y: 48)
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    Image(systemName: card.icon)
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                    Text(card.label.uppercased())
-                        .font(.system(size: 9.5, weight: .heavy)).tracking(0.5)
-                        .foregroundColor(.white.opacity(0.95))
-                        .lineLimit(1)
-                }
-
-                Spacer(minLength: 6)
-
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(card.value)
-                        .font(.system(size: 30, weight: .heavy))
-                        .foregroundColor(.white)
-                    if let unit = card.unit {
-                        Text(unit)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
-                    }
-                }
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-
-                Text(card.detail)
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 2)
-            }
-            .padding(.horizontal, 13)
-            .padding(.vertical, 12)
-        }
-        .frame(width: 142, height: 116)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
-        )
-        .shadow(color: card.color.opacity(0.3), radius: 10, y: 5)
-    }
-}
-
-// MARK: - Day mix donut
-
-struct MixSegment: Identifiable {
-    var id: String { label }
-    let color: Color
-    let label: String
-    let range: String
-    let count: Int
-}
-
-/// A segmented ring showing how the last 30 days split across score bands.
-struct DayMixDonut: View {
-    let segments: [MixSegment]
-    let centerValue: String
-    let centerLabel: String
-
-    @State private var drawn = false
-
-    private let lineWidth: CGFloat = 15
-    /// Small visual gap between neighbouring segments.
-    private let gap: CGFloat = 0.006
-
-    private var total: Int { max(segments.reduce(0) { $0 + $1.count }, 1) }
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Aura.softFill, lineWidth: lineWidth)
-
-            ForEach(Array(segments.enumerated()), id: \.element.id) { index, segment in
-                let bounds = range(at: index)
-                Circle()
-                    .trim(from: bounds.start, to: drawn ? bounds.end : bounds.start)
-                    .stroke(segment.color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .butt))
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.55).delay(Double(index) * 0.09), value: drawn)
-            }
-
-            VStack(spacing: 0) {
-                Text(centerValue)
-                    .font(.system(size: 30, weight: .heavy, design: .rounded))
-                    .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold)).foregroundColor(.primary)
                     .monospacedDigit()
-                Text(centerLabel)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Text(label)
+                    .font(.system(size: 12.5, weight: .medium)).foregroundColor(.primary)
+                Text(caption)
+                    .font(.system(size: 11)).foregroundColor(.secondary)
+                    .lineLimit(1)
             }
         }
-        .onAppear { drawn = true }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .auraCard(padding: 0, cornerRadius: 16)
     }
+}
 
-    /// Start / end of a segment's arc, leaving a hairline gap after it.
-    private func range(at index: Int) -> (start: CGFloat, end: CGFloat) {
-        let before = segments.prefix(index).reduce(0) { $0 + $1.count }
-        let start = CGFloat(before) / CGFloat(total)
-        let raw = start + CGFloat(segments[index].count) / CGFloat(total)
-        return (start, max(start, raw - (raw < 1 ? gap : 0)))
-    }
+struct MixBand: Identifiable {
+    var id: String { label }
+    let label: String
+    let color: Color
+    let count: Int
 }
