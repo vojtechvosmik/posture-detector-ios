@@ -386,7 +386,7 @@ struct HomeScreen: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 showingCoach = true
             } label: {
-                CoachMiniCard(insight: report.headline)
+                CoachMiniCard(insight: report.headline, progress: report.deepProgress)
             }
             .buttonStyle(.plain)
             .sheet(isPresented: $showingCoach) {

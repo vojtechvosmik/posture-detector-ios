@@ -25,12 +25,13 @@ struct PaywallView: View {
     @State private var appeared = false
 
     // Theme (shared with the onboarding aurora)
-    private let accent = Color(red: 0.36, green: 0.52, blue: 1.0)
-    private let violet = Color(red: 0.58, green: 0.40, blue: 0.98)
+    // Brand palette, sampled from the app icon.
+    private let accent = Color(red: 0.10, green: 0.62, blue: 0.44)
+    private let teal = Color(red: 0.07, green: 0.49, blue: 0.58)
     private let success = Color(red: 0.22, green: 0.80, blue: 0.55)
 
     private var accentGradient: LinearGradient {
-        LinearGradient(colors: [accent, violet], startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(colors: [accent, teal], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     var body: some View {
@@ -93,7 +94,7 @@ struct PaywallView: View {
 
     private var hero: some View {
         VStack(spacing: 20) {
-            PaywallGlowOrb(systemName: "crown.fill", tint: violet, size: 104)
+            PaywallGlowOrb(systemName: "crown.fill", tint: teal, size: 104)
                 .scaleEffect(appeared ? 1 : 0.8)
                 .opacity(appeared ? 1 : 0)
 
@@ -135,7 +136,7 @@ struct PaywallView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(accentGradient)
                     .frame(width: 44, height: 44)
-                    .shadow(color: violet.opacity(0.35), radius: 8, y: 3)
+                    .shadow(color: teal.opacity(0.35), radius: 8, y: 3)
                 Image(systemName: icon)
                     .font(.system(size: 19, weight: .semibold))
                     .foregroundColor(.white)
@@ -217,7 +218,7 @@ struct PaywallView: View {
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(selected ? Color.white.opacity(0.55) : Color.white.opacity(0.10),
                         lineWidth: selected ? 1.5 : 1))
-            .shadow(color: selected ? violet.opacity(0.4) : .clear, radius: 16, y: 6)
+            .shadow(color: selected ? teal.opacity(0.4) : .clear, radius: 16, y: 6)
         }
         .buttonStyle(PaywallPressableStyle())
     }
@@ -239,7 +240,7 @@ struct PaywallView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(accentGradient, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: violet.opacity(0.5), radius: 16, y: 8)
+                .shadow(color: teal.opacity(0.5), radius: 16, y: 8)
             }
             .buttonStyle(PaywallPressableStyle())
             .disabled(subscriptions.isPurchasing)
@@ -262,9 +263,9 @@ struct PaywallView: View {
         .padding(.bottom, 14)
         .background(
             LinearGradient(
-                colors: [Color(red: 0.05, green: 0.05, blue: 0.11).opacity(0),
-                         Color(red: 0.05, green: 0.05, blue: 0.11).opacity(0.85),
-                         Color(red: 0.05, green: 0.05, blue: 0.11)],
+                colors: [Color(red: 0.02, green: 0.05, blue: 0.05).opacity(0),
+                         Color(red: 0.02, green: 0.05, blue: 0.05).opacity(0.85),
+                         Color(red: 0.02, green: 0.05, blue: 0.05)],
                 startPoint: .top, endPoint: .bottom
             )
             .ignoresSafeArea(edges: .bottom)
@@ -324,14 +325,14 @@ private struct PaywallAurora: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(red: 0.04, green: 0.04, blue: 0.09),
-                         Color(red: 0.07, green: 0.06, blue: 0.16)],
+                colors: [Color(red: 0.02, green: 0.04, blue: 0.04),
+                         Color(red: 0.02, green: 0.07, blue: 0.08)],
                 startPoint: .top, endPoint: .bottom
             )
-            blob(Color(red: 0.24, green: 0.44, blue: 1.0), 400, x: animate ? -110 : -70, y: animate ? -300 : -360)
-            blob(Color(red: 0.56, green: 0.32, blue: 0.96), 440, x: animate ? 150 : 110, y: animate ? -150 : -90)
-            blob(Color(red: 0.86, green: 0.32, blue: 0.68), 360, x: animate ? -120 : -70, y: animate ? 280 : 340)
-            blob(Color(red: 0.20, green: 0.68, blue: 0.95), 320, x: animate ? 140 : 100, y: animate ? 320 : 270)
+            blob(Color(red: 0.07, green: 0.42, blue: 0.31), 400, x: animate ? -110 : -70, y: animate ? -300 : -360)
+            blob(Color(red: 0.06, green: 0.34, blue: 0.42), 440, x: animate ? 150 : 110, y: animate ? -150 : -90)
+            blob(Color(red: 0.05, green: 0.28, blue: 0.26), 360, x: animate ? -120 : -70, y: animate ? 280 : 340)
+            blob(Color(red: 0.10, green: 0.48, blue: 0.36), 320, x: animate ? 140 : 100, y: animate ? 320 : 270)
         }
         .ignoresSafeArea()
         .onAppear {

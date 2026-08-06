@@ -131,6 +131,8 @@ private struct CoachHourShape: View {
 /// session count toward it, so weekends are never required.
 private struct CoachDeepProgress: View {
     let progress: DeepReadiness
+    /// Drops the explanation — the home card has no room for it.
+    var compact: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -153,9 +155,11 @@ private struct CoachDeepProgress: View {
             }
             .frame(height: 6)
 
-            Text("Patterns in time of day, context and fatigue unlock after \(progress.target) tracked days — \(progress.remaining) to go. Only days with a session count, so weekends are optional.")
-                .font(.system(size: 11.5)).foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if !compact {
+                Text("Patterns in time of day, context and fatigue unlock after \(progress.target) tracked days — \(progress.remaining) to go. Only days with a session count, so weekends are optional.")
+                    .font(.system(size: 11.5)).foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }
@@ -429,8 +433,11 @@ struct CoachDetailSheet: View {
 /// what marks it as the one card that talks rather than measures.
 struct CoachMiniCard: View {
     let insight: PostureInsight
+    /// Set while the deep analysis is still collecting days.
+    var progress: DeepReadiness?
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
         HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 5) {
                 CoachByline()
@@ -463,6 +470,12 @@ struct CoachMiniCard: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.secondary.opacity(0.4))
+        }
+
+            if let progress = progress {
+                Rectangle().fill(Aura.hairline).frame(height: 1)
+                CoachDeepProgress(progress: progress, compact: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .auraCard()

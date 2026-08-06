@@ -23,6 +23,7 @@ struct DebugScenario: Identifiable {
         case coverage = "COVERAGE & GAPS"
         case quality  = "SCORES & TRENDS"
         case deep     = "DEEP ANALYSIS"
+        case appState = "APP STATE"
     }
 
     let id: String
@@ -35,6 +36,7 @@ struct DebugScenario: Identifiable {
 // MARK: - Screen
 
 struct DebugDataScreen: View {
+    @ObservedObject private var subscriptions = SubscriptionManager.shared
     @State private var applied: String?
 
     var body: some View {
@@ -66,6 +68,22 @@ struct DebugDataScreen: View {
                             .padding(.vertical, 3)
                         }
                     }
+                }
+            }
+
+            Section("CURRENT STATE") {
+                HStack {
+                    Text("PRO").font(.system(size: 15))
+                    Spacer()
+                    Text(subscriptions.isPro ? "active" : "free")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(subscriptions.isPro ? .green : .secondary)
+                }
+                HStack {
+                    Text("Onboarding").font(.system(size: 15))
+                    Spacer()
+                    Text(UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") ? "done" : "pending")
+                        .font(.system(size: 15, weight: .semibold)).foregroundColor(.secondary)
                 }
             }
 
@@ -184,7 +202,40 @@ enum DebugDataFactory {
 
     // MARK: Scenarios
 
-    static var scenarios: [DebugScenario] { starting + coverage + quality + deep }
+    static var scenarios: [DebugScenario] { starting + coverage + quality + deep + appState }
+
+    private static var appState: [DebugScenario] {
+        [
+            DebugScenario(id: "resetOnboarding", group: .appState,
+                          title: "Replay onboarding",
+                          detail: "Clears the completion flag — onboarding appears immediately.") {
+                UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+            },
+            DebugScenario(id: "resetPaywall", group: .appState,
+                          title: "Replay intro paywall",
+                          detail: "The paywall shows again on the next launch.") {
+                UserDefaults.standard.set(false, forKey: "hasSeenInitialPaywall")
+            },
+            DebugScenario(id: "proOn", group: .appState,
+                          title: "Turn PRO on",
+                          detail: "Unlocks everything without a purchase.") {
+                Task { @MainActor in SubscriptionManager.shared.setPro(true) }
+            },
+            DebugScenario(id: "proOff", group: .appState,
+                          title: "Turn PRO off",
+                          detail: "Back to the free tier.") {
+                Task { @MainActor in SubscriptionManager.shared.setPro(false) }
+            },
+            DebugScenario(id: "freshInstall", group: .appState,
+                          title: "Fresh install",
+                          detail: "Wipes posture data, PRO, onboarding and paywall flags.") {
+                write([])
+                Task { @MainActor in SubscriptionManager.shared.setPro(false) }
+                UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+                UserDefaults.standard.set(false, forKey: "hasSeenInitialPaywall")
+            }
+        ]
+    }
 
     private static var starting: [DebugScenario] {
         [
