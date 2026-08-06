@@ -98,9 +98,14 @@ extension PostureMonitor {
             pausedElapsedSeconds: elapsed
         )
 
+        // Hold a background assertion so the update still lands when this is
+        // triggered by an AirPods disconnect, which is exactly the moment the
+        // app is about to lose its background time.
+        let assertion = UIApplication.shared.beginBackgroundTask(withName: "LiveActivityUpdate")
         Task {
             await activity.update(using: updatedState)
             print("✅ Live Activity state updated: monitoring=\(isMonitoring), elapsed=\(elapsed ?? 0)s")
+            if assertion != .invalid { UIApplication.shared.endBackgroundTask(assertion) }
         }
     }
     #endif

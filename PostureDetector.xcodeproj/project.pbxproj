@@ -17,6 +17,7 @@
 		8C9D4EF62F122F9400DAA24B /* PostureMonitor+ActivityKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */; };
 		8C9D4EF82F12302F00DAA24B /* PostureStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */; };
 		8CAA10022F1230AA00DAA24B /* PostureInsightEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10012F1230AA00DAA24B /* PostureInsightEngine.swift */; };
+		8CAA10222F1230AD00DAA24B /* WalkSignals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10212F1230AD00DAA24B /* WalkSignals.swift */; };
 		8CAA100C2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA100B2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift */; };
 		8CAA100A2F1230AB00DAA24B /* PosturePatternAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10092F1230AB00DAA24B /* PosturePatternAnalyzer.swift */; };
 		8CAA10062F1230AA00DAA24B /* PostureInsightDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAA10052F1230AA00DAA24B /* PostureInsightDetails.swift */; };
@@ -98,6 +99,7 @@
 		8C9D4EF52F122F8C00DAA24B /* PostureMonitor+ActivityKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureMonitor+ActivityKit.swift"; sourceTree = "<group>"; };
 		8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureStatus.swift; sourceTree = "<group>"; };
 		8CAA10012F1230AA00DAA24B /* PostureInsightEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureInsightEngine.swift; sourceTree = "<group>"; };
+		8CAA10212F1230AD00DAA24B /* WalkSignals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkSignals.swift; sourceTree = "<group>"; };
 		8CAA100B2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostureInsightEngine+Deep.swift"; sourceTree = "<group>"; };
 		8CAA10092F1230AB00DAA24B /* PosturePatternAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PosturePatternAnalyzer.swift; sourceTree = "<group>"; };
 		8CAA10052F1230AA00DAA24B /* PostureInsightDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostureInsightDetails.swift; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 			children = (
 				8C9D4EF72F12302F00DAA24B /* PostureStatus.swift */,
 				8CAA10012F1230AA00DAA24B /* PostureInsightEngine.swift */,
+				8CAA10212F1230AD00DAA24B /* WalkSignals.swift */,
 				8CAA100B2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift */,
 				8CAA10092F1230AB00DAA24B /* PosturePatternAnalyzer.swift */,
 				8CAA10052F1230AA00DAA24B /* PostureInsightDetails.swift */,
@@ -502,6 +505,7 @@
 				8CAA10042F1230AA00DAA24B /* CoachPanel.swift in Sources */,
 				8C9D4EF82F12302F00DAA24B /* PostureStatus.swift in Sources */,
 				8CAA10022F1230AA00DAA24B /* PostureInsightEngine.swift in Sources */,
+				8CAA10222F1230AD00DAA24B /* WalkSignals.swift in Sources */,
 				8CAA100C2F1230AB00DAA24B /* PostureInsightEngine+Deep.swift in Sources */,
 				8CAA100A2F1230AB00DAA24B /* PosturePatternAnalyzer.swift in Sources */,
 				8CAA10062F1230AA00DAA24B /* PostureInsightDetails.swift in Sources */,

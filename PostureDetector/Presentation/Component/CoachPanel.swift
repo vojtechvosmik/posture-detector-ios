@@ -208,7 +208,7 @@ struct CoachPanel: View {
                 }
             }
 
-            if let tip = report.tips.first {
+            if let tip = report.tips.first, report.deepProgress == nil {
                 Rectangle().fill(Aura.hairline).frame(height: 1)
                 HStack(spacing: 10) {
                     Image(systemName: "lightbulb.fill")
@@ -261,15 +261,19 @@ struct CoachDetailSheet: View {
                 VStack(alignment: .leading, spacing: 26) {
                     hero
                     summary
-                    if !report.hourProfile.isEmpty { dayShape }
-                    if !report.tips.isEmpty { tips }
-                    if !report.signals.isEmpty { insights }
+                    // The progress card comes first while the coach is still
+                    // collecting — it explains why the rest is missing.
                     if let progress = report.deepProgress {
                         CoachDeepProgress(progress: progress)
                             .padding(16)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .auraCard(padding: 0, cornerRadius: 18)
                     }
+                    // The day shape and the signals list both read the intraday
+                    // samples, so they stay closed until deep analysis unlocks.
+                    if !report.hourProfile.isEmpty, report.deepProgress == nil { dayShape }
+                    if !report.tips.isEmpty { tips }
+                    if !report.signals.isEmpty, report.deepProgress == nil { insights }
                 }
                 .padding(.bottom, 36)
             }
@@ -358,7 +362,7 @@ struct CoachDetailSheet: View {
     private var tips: some View {
         section("TIPS FOR YOU") {
             VStack(spacing: 8) {
-                ForEach(Array(report.tips.enumerated()), id: \.element.id) { index, tip in
+                ForEach(Array(visibleTips.enumerated()), id: \.element.id) { index, tip in
                     HStack(spacing: 13) {
                         Text("\(index + 1)")
                             .font(.system(size: 12, weight: .heavy, design: .rounded))
@@ -385,6 +389,11 @@ struct CoachDetailSheet: View {
                 }
             }
         }
+    }
+
+    /// One step while the coach is still learning, the full set afterwards.
+    private var visibleTips: [CoachTip] {
+        report.deepProgress == nil ? report.tips : Array(report.tips.prefix(1))
     }
 
     private var insights: some View {

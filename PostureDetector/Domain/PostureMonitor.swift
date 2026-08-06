@@ -113,6 +113,9 @@ class PostureMonitor: NSObject, ObservableObject {
 
     // Live Activity
     #if canImport(ActivityKit)
+    /// True while a session is paused specifically because the AirPods dropped.
+    private var pausedByDisconnect = false
+
     var currentActivity: Any?  // Activity<PostureAttributes> on iOS 16.1+
     var liveActivityStartTime: Date?
     #endif
@@ -361,6 +364,8 @@ class PostureMonitor: NSObject, ObservableObject {
         } catch {
             logger.log("Failed to activate audio session: \(error)", category: "ERROR")
         }
+
+        pausedByDisconnect = false
 
         // Start session tracking
         if let dataStore = dataStore {
@@ -619,6 +624,13 @@ class PostureMonitor: NSObject, ObservableObject {
         isMonitoring = false
         hapticMedium.impactOccurred()
 
+        // First thing, while the app still holds background execution: the
+        // silent audio below is what keeps us alive, and once it stops the
+        // system can suspend us before an async Live Activity update lands.
+        if #available(iOS 16.1, *), keepLiveActivity {
+            updateLiveActivityState()
+        }
+
         // Stop debug logging timer
         stopLoggingTimer()
 
@@ -647,10 +659,7 @@ class PostureMonitor: NSObject, ObservableObject {
         postureStatus = .unknown
 
         if #available(iOS 16.1, *) {
-            if keepLiveActivity {
-                // Update state but keep Live Activity alive
-                updateLiveActivityState()
-            } else {
+            if !keepLiveActivity {
                 // End Live Activity completely
                 endLiveActivity()
             }
@@ -664,6 +673,7 @@ class PostureMonitor: NSObject, ObservableObject {
 
             // Pause monitoring if currently running
             if isMonitoring {
+                pausedByDisconnect = true
                 stopMonitoring(keepLiveActivity: true)
                 logger.log("⏸️ Monitoring paused due to AirPods disconnection", category: "CONNECTION")
 
@@ -679,6 +689,13 @@ class PostureMonitor: NSObject, ObservableObject {
             // AirPods reconnected
             logger.log("🎧 AirPods reconnected", category: "CONNECTION")
             cancelDisconnectionTimer()
+
+            // Only nudge when a disconnect is what stopped the session.
+            if pausedByDisconnect && !isMonitoring {
+                sendAirPodsReconnectedNotification()
+                logger.log("🔔 Reminded to restart tracking", category: "CONNECTION")
+            }
+            pausedByDisconnect = false
         }
     }
 
@@ -1019,6 +1036,8 @@ class PostureMonitor: NSObject, ObservableObject {
 
             self.handlePostureTransition(previousStatus: previousStatus)
         }
+
+        pausedByDisconnect = false
 
         // Start session tracking
         if let dataStore = dataStore {

@@ -20,6 +20,7 @@ struct OnboardingView: View {
     @StateObject private var motion = OnboardingMotionManager()
 
     @State private var step: Step = .welcome
+    @State private var showRoutePicker = false
     @State private var selectedMode: PostureMode = .desk
     @State private var notificationGranted = false
     @State private var isRequestingPermission = false
@@ -581,12 +582,8 @@ struct OnboardingView: View {
             .buttonStyle(PressableStyle())
             .disabled(!cta.enabled)
 
-            if cta.routePicker {
-                RoutePickerView(tint: .white, activeTint: .white)
-                    .frame(height: 56)
-                    .opacity(0.02)
-            }
         }
+        .routePicker(isPresented: $showRoutePicker)
     }
 
     private var primaryCTA: CTA {
@@ -599,7 +596,7 @@ struct OnboardingView: View {
             return CTA(title: "Continue") { next() }
         case .connect:
             if motion.isConnected { return CTA(title: "Continue") { next() } }
-            return CTA(title: "Choose AirPods", routePicker: true) { }
+            return CTA(title: "Choose AirPods") { showRoutePicker = true }
         case .calibrate:
             if isCalibrated { return CTA(title: "Continue") { next() } }
             if readyToConfirm { return CTA(title: "Set my posture", tint: success) { confirmCalibration() } }

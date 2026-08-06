@@ -2,34 +2,30 @@
 //  WalkDetectionDebugScreen.swift
 //  PostureDetector
 //
-//  Live view of what iOS thinks you are doing. Core Motion exposes two
-//  independent signals and this screen shows both as they arrive:
+//  Four detectors, side by side, updating live — so "is walk detection
+//  working" becomes a question you can answer by looking rather than guessing.
 //
-//    • CMMotionActivityManager — the motion coprocessor's classifier. It
-//      reports walking / running / automotive / cycling / stationary, each with
-//      a confidence, and can report several at once (or none, as "unknown").
-//    • CMPedometer — live step counts and cadence, which react faster than the
-//      classifier and work with the phone in hand.
-//
-//  The app combines them for auto-relax while walking; this screen exists to
-//  judge how reliable that is in practice, so everything is timestamped and the
-//  recent history is kept on screen.
+//  Each card lights up on its own, which is the point: if the phone is on a
+//  desk, only the AirPods detector should fire; if Motion & Fitness is off, the
+//  top two go dark while the bottom two carry on.
 //
 
 import SwiftUI
 import CoreMotion
 
 struct WalkDetectionDebugScreen: View {
-    @StateObject private var probe = WalkDetectionProbe()
+    @StateObject private var signals = WalkSignals()
+    @State private var now = Date()
+
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                liveState
-                classifier
-                pedometer
+            VStack(alignment: .leading, spacing: 20) {
+                verdict
+                detectors
                 permissions
-                history
+                notes
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
@@ -37,127 +33,181 @@ struct WalkDetectionDebugScreen: View {
         .background(AuraBackground())
         .navigationTitle("Walk detection")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { probe.start() }
-        .onDisappear { probe.stop() }
+        .onAppear { signals.start() }
+        .onDisappear { signals.stop() }
+        .onReceive(ticker) { now = $0 }
     }
 
-    // MARK: - Headline
+    // MARK: - Verdict
 
-    private var liveState: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 14) {
-                Image(systemName: probe.state.icon)
-                    .font(.system(size: 26, weight: .semibold))
-                    .foregroundColor(probe.state.tint)
-                    .frame(width: 54, height: 54)
-                    .background(probe.state.tint.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    private var verdict: some View {
+        HStack(spacing: 14) {
+            Image(systemName: signals.anyWalking ? "figure.walk" : "figure.stand")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundColor(signals.anyWalking ? Aura.green : .secondary)
+                .frame(width: 54, height: 54)
+                .background((signals.anyWalking ? Aura.green : Color.secondary).opacity(0.15),
+                            in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(probe.state.title)
-                        .font(.system(size: 22, weight: .bold)).foregroundColor(.primary)
-                    Text(probe.lastUpdateText)
-                        .font(.system(size: 12.5)).foregroundColor(.secondary)
-                        .monospacedDigit()
-                }
-                Spacer(minLength: 0)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(signals.anyWalking ? "Moving" : "Still")
+                    .font(.system(size: 22, weight: .bold)).foregroundColor(.primary)
+                Text("\(activeCount) of 4 detectors firing")
+                    .font(.system(size: 12.5)).foregroundColor(.secondary)
             }
-
-            HStack(spacing: 0) {
-                metric("Moving", probe.isMoving ? "YES" : "no",
-                       tint: probe.isMoving ? Aura.green : .secondary)
-                divider
-                metric("Confidence", probe.confidenceText, tint: .primary)
-                divider
-                metric("Updates", "\(probe.updateCount)", tint: .primary)
-            }
+            Spacer(minLength: 0)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .auraCard(padding: 0, cornerRadius: 20)
     }
 
-    // MARK: - Sections
+    private var activeCount: Int {
+        [signals.classifier, signals.pedometer, signals.phone, signals.head]
+            .filter { $0.isWalking }.count
+    }
 
-    private var classifier: some View {
-        section("CMMOTIONACTIVITYMANAGER") {
-            VStack(spacing: 0) {
-                flag("Walking", probe.walking)
-                rowDivider
-                flag("Running", probe.running)
-                rowDivider
-                flag("Cycling", probe.cycling)
-                rowDivider
-                flag("Automotive", probe.automotive)
-                rowDivider
-                flag("Stationary", probe.stationary)
-                rowDivider
-                flag("Unknown", probe.unknown)
+    // MARK: - Detectors
+
+    private var detectors: some View {
+        section("DETECTORS") {
+            VStack(spacing: 10) {
+                card(signals.classifier, index: 1)
+                card(signals.pedometer, index: 2)
+                card(signals.phone, index: 3)
+                card(signals.head, index: 4)
             }
-            .auraCard(padding: 0, cornerRadius: 16)
         }
     }
 
-    private var pedometer: some View {
-        section("CMPEDOMETER") {
-            VStack(spacing: 0) {
-                value("Steps since opened", "\(probe.steps)")
-                rowDivider
-                value("Cadence", probe.cadenceText)
-                rowDivider
-                value("Pace", probe.paceText)
-                rowDivider
-                value("Distance", probe.distanceText)
-                rowDivider
-                value("Last step", probe.lastStepText)
+    private func card(_ signal: WalkSignal, index: Int) -> some View {
+        let live = signal.available && signal.authorized
+        return VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 10) {
+                Text("\(index)")
+                    .font(.system(size: 11, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                    .frame(width: 20, height: 20)
+                    .background(signal.isWalking ? Aura.green : Color.secondary.opacity(0.5), in: Circle())
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(signal.name)
+                        .font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    Text(signal.detail)
+                        .font(.system(size: 11)).foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+
+                Text(signal.isWalking ? "WALKING" : (live ? "still" : "off"))
+                    .font(.system(size: 10, weight: .heavy)).tracking(0.6)
+                    .foregroundColor(signal.isWalking ? .white : .secondary)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(signal.isWalking ? Aura.green : Aura.softFill, in: Capsule())
             }
-            .auraCard(padding: 0, cornerRadius: 16)
+
+            HStack {
+                Text(live ? signal.readout : unavailableReason(signal))
+                    .font(.system(size: 12.5, design: .monospaced))
+                    .foregroundColor(.secondary)
+                Spacer(minLength: 8)
+                if let change = signal.lastChange {
+                    Text("\(Int(now.timeIntervalSince(change)))s ago")
+                        .font(.system(size: 11)).foregroundColor(.secondary.opacity(0.8))
+                        .monospacedDigit()
+                }
+            }
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .auraCard(padding: 0, cornerRadius: 16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(signal.isWalking ? Aura.green.opacity(0.55) : .clear, lineWidth: 1.5)
+        )
     }
+
+    private func unavailableReason(_ signal: WalkSignal) -> String {
+        if !signal.available { return "not available on this device" }
+        if !signal.authorized { return "Motion & Fitness not granted" }
+        return "—"
+    }
+
+    // MARK: - Permissions
 
     private var permissions: some View {
-        section("AVAILABILITY") {
+        section("PERMISSION") {
             VStack(spacing: 0) {
-                value("Authorization", probe.authorizationText)
-                rowDivider
-                value("Activity available", CMMotionActivityManager.isActivityAvailable() ? "yes" : "no")
-                rowDivider
-                value("Step counting", CMPedometer.isStepCountingAvailable() ? "yes" : "no")
-                rowDivider
-                value("Cadence", CMPedometer.isCadenceAvailable() ? "yes" : "no")
-                rowDivider
-                value("Distance", CMPedometer.isDistanceAvailable() ? "yes" : "no")
-            }
-            .auraCard(padding: 0, cornerRadius: 16)
-        }
-    }
+                HStack {
+                    Text("Motion & Fitness").font(.system(size: 14)).foregroundColor(.secondary)
+                    Spacer()
+                    Text(authorizationText)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isAuthorized ? .primary : Aura.coral)
+                }
+                .padding(.horizontal, 14).padding(.vertical, 11)
 
-    private var history: some View {
-        section("RECENT EVENTS") {
-            VStack(spacing: 0) {
-                if probe.events.isEmpty {
-                    Text("Waiting for the first classification…")
-                        .font(.system(size: 13)).foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(14)
-                } else {
-                    ForEach(Array(probe.events.enumerated()), id: \.element.id) { index, event in
-                        if index > 0 { rowDivider }
-                        HStack(spacing: 10) {
-                            Text(event.time)
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(.secondary)
-                            Text(event.label)
-                                .font(.system(size: 13, weight: .medium)).foregroundColor(.primary)
-                            Spacer(minLength: 0)
-                            Text(event.confidence)
-                                .font(.system(size: 11, weight: .semibold)).foregroundColor(.secondary)
+                if !isAuthorized {
+                    divider
+                    Button {
+                        openSettings()
+                    } label: {
+                        HStack {
+                            Text("Open Settings").font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Aura.accent)
+                            Spacer()
+                            Image(systemName: "arrow.up.forward.app")
+                                .font(.system(size: 12, weight: .bold)).foregroundColor(Aura.accent)
                         }
-                        .padding(.horizontal, 14).padding(.vertical, 10)
+                        .padding(.horizontal, 14).padding(.vertical, 11)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .auraCard(padding: 0, cornerRadius: 16)
+        }
+    }
+
+    private var isAuthorized: Bool { CMMotionActivityManager.authorizationStatus() == .authorized }
+
+    private var authorizationText: String {
+        switch CMMotionActivityManager.authorizationStatus() {
+        case .authorized:    return "authorized"
+        case .denied:        return "denied"
+        case .restricted:    return "restricted"
+        case .notDetermined: return "not determined"
+        @unknown default:    return "unknown"
+        }
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    // MARK: - Notes
+
+    private var notes: some View {
+        section("HOW TO READ THIS") {
+            VStack(alignment: .leading, spacing: 9) {
+                note("1 and 2 need Motion & Fitness and only see the phone. With it on a desk they will stay quiet no matter how much you walk.")
+                note("3 reads the raw accelerometer — no permission needed, but the phone has to be in a pocket or hand.")
+                note("4 reads the AirPods. It is the only one that works while the phone stays on the desk, and it reacts in a couple of seconds.")
+                note("Walking is a bob of roughly 1.2–3 steps per second. The readout shows amplitude in g and the measured cadence.")
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .auraCard(padding: 0, cornerRadius: 16)
+        }
+    }
+
+    private func note(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Circle().fill(Color.secondary.opacity(0.4)).frame(width: 4, height: 4).padding(.top, 6)
+            Text(text)
+                .font(.system(size: 12.5)).foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -173,237 +223,7 @@ struct WalkDetectionDebugScreen: View {
         }
     }
 
-    private func metric(_ label: String, _ value: String, tint: Color) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
-                .font(.system(size: 15, weight: .bold)).foregroundColor(tint)
-                .monospacedDigit()
-            Text(label.uppercased())
-                .font(.system(size: 8.5, weight: .heavy)).tracking(0.4)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func flag(_ label: String, _ on: Bool) -> some View {
-        HStack {
-            Image(systemName: on ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(on ? Aura.green : .secondary.opacity(0.4))
-            Text(label)
-                .font(.system(size: 14, weight: on ? .semibold : .regular))
-                .foregroundColor(on ? .primary : .secondary)
-            Spacer()
-        }
-        .padding(.horizontal, 14).padding(.vertical, 11)
-    }
-
-    private func value(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label).font(.system(size: 14)).foregroundColor(.secondary)
-            Spacer()
-            Text(value).font(.system(size: 14, weight: .semibold)).foregroundColor(.primary)
-                .monospacedDigit()
-        }
-        .padding(.horizontal, 14).padding(.vertical, 11)
-    }
-
-    private var rowDivider: some View {
+    private var divider: some View {
         Rectangle().fill(Aura.hairline).frame(height: 1).padding(.leading, 14)
     }
-
-    private var divider: some View {
-        Rectangle().fill(Aura.hairline).frame(width: 1, height: 26)
-    }
-}
-
-// MARK: - Probe
-
-/// Owns its own Core Motion subscriptions so the screen works whether or not
-/// posture monitoring is running.
-final class WalkDetectionProbe: ObservableObject {
-
-    struct Event: Identifiable {
-        let id = UUID()
-        let time: String
-        let label: String
-        let confidence: String
-    }
-
-    enum State {
-        case walking, running, cycling, automotive, stationary, unknown, idle
-
-        var title: String {
-            switch self {
-            case .walking:    return "Walking"
-            case .running:    return "Running"
-            case .cycling:    return "Cycling"
-            case .automotive: return "In a vehicle"
-            case .stationary: return "Stationary"
-            case .unknown:    return "Unknown"
-            case .idle:       return "Waiting…"
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .walking:    return "figure.walk"
-            case .running:    return "figure.run"
-            case .cycling:    return "bicycle"
-            case .automotive: return "car.fill"
-            case .stationary: return "figure.stand"
-            case .unknown:    return "questionmark"
-            case .idle:       return "hourglass"
-            }
-        }
-
-        var tint: Color {
-            switch self {
-            case .walking, .running, .cycling: return Aura.green
-            case .automotive:                  return Aura.orange
-            case .stationary:                  return Aura.accent
-            case .unknown, .idle:              return .secondary
-            }
-        }
-    }
-
-    @Published private(set) var state: State = .idle
-    @Published private(set) var walking = false
-    @Published private(set) var running = false
-    @Published private(set) var cycling = false
-    @Published private(set) var automotive = false
-    @Published private(set) var stationary = false
-    @Published private(set) var unknown = false
-    @Published private(set) var confidenceText = "—"
-    @Published private(set) var updateCount = 0
-    @Published private(set) var lastUpdate: Date?
-    @Published private(set) var events: [Event] = []
-
-    @Published private(set) var steps = 0
-    @Published private(set) var cadenceText = "—"
-    @Published private(set) var paceText = "—"
-    @Published private(set) var distanceText = "—"
-    @Published private(set) var lastStep: Date?
-
-    private let activityManager = CMMotionActivityManager()
-    private let pedometer = CMPedometer()
-    private var ticker: Timer?
-    private var running_ = false
-
-    var isMoving: Bool { walking || running || cycling || automotive }
-
-    var lastUpdateText: String {
-        guard let last = lastUpdate else { return "No classification yet" }
-        let seconds = Int(Date().timeIntervalSince(last))
-        return seconds < 2 ? "Updated just now" : "Updated \(seconds)s ago"
-    }
-
-    var lastStepText: String {
-        guard let last = lastStep else { return "—" }
-        return "\(Int(Date().timeIntervalSince(last)))s ago"
-    }
-
-    var authorizationText: String {
-        switch CMMotionActivityManager.authorizationStatus() {
-        case .authorized:    return "authorized"
-        case .denied:        return "denied"
-        case .restricted:    return "restricted"
-        case .notDetermined: return "not determined"
-        @unknown default:    return "unknown"
-        }
-    }
-
-    func start() {
-        guard !running_ else { return }
-        running_ = true
-
-        if CMMotionActivityManager.isActivityAvailable() {
-            activityManager.startActivityUpdates(to: .main) { [weak self] activity in
-                guard let self = self, let activity = activity else { return }
-                self.apply(activity)
-            }
-        }
-
-        if CMPedometer.isStepCountingAvailable() {
-            pedometer.startUpdates(from: Date()) { [weak self] data, _ in
-                guard let self = self, let data = data else { return }
-                DispatchQueue.main.async { self.apply(data) }
-            }
-        }
-
-        // Keeps the "…s ago" labels honest between callbacks.
-        ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            self?.objectWillChange.send()
-        }
-    }
-
-    func stop() {
-        guard running_ else { return }
-        running_ = false
-        activityManager.stopActivityUpdates()
-        pedometer.stopUpdates()
-        ticker?.invalidate()
-        ticker = nil
-    }
-
-    private func apply(_ activity: CMMotionActivity) {
-        walking = activity.walking
-        running = activity.running
-        cycling = activity.cycling
-        automotive = activity.automotive
-        stationary = activity.stationary
-        unknown = activity.unknown
-
-        state = activity.walking ? .walking
-            : activity.running ? .running
-            : activity.cycling ? .cycling
-            : activity.automotive ? .automotive
-            : activity.stationary ? .stationary
-            : .unknown
-
-        confidenceText = Self.confidence(activity.confidence)
-        lastUpdate = activity.startDate
-        updateCount += 1
-
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        events.insert(Event(time: formatter.string(from: activity.startDate),
-                            label: state.title,
-                            confidence: confidenceText),
-                      at: 0)
-        if events.count > 20 { events.removeLast(events.count - 20) }
-    }
-
-    private func apply(_ data: CMPedometerData) {
-        let newSteps = data.numberOfSteps.intValue
-        if newSteps > steps { lastStep = Date() }
-        steps = newSteps
-
-        if let cadence = data.currentCadence?.doubleValue, cadence > 0 {
-            cadenceText = String(format: "%.2f steps/s", cadence)
-        } else {
-            cadenceText = "—"
-        }
-        if let pace = data.currentPace?.doubleValue, pace > 0 {
-            paceText = String(format: "%.1f s/m", pace)
-        } else {
-            paceText = "—"
-        }
-        if let distance = data.distance?.doubleValue {
-            distanceText = String(format: "%.0f m", distance)
-        } else {
-            distanceText = "—"
-        }
-    }
-
-    private static func confidence(_ confidence: CMMotionActivityConfidence) -> String {
-        switch confidence {
-        case .low:    return "low"
-        case .medium: return "medium"
-        case .high:   return "high"
-        @unknown default: return "—"
-        }
-    }
-
-    deinit { stop() }
 }

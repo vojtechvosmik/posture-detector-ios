@@ -251,13 +251,20 @@ enum DebugDataFactory {
             },
             DebugScenario(id: "threeDays", group: .starting,
                           title: "Three days in",
-                          detail: "Early baseline. Deep analysis shows 0 / 14 — no intraday data yet.") {
-                write((0...2).map { day($0, score: 68 + wobble($0, 6), hours: 3) })
+                          detail: "Early baseline, deep analysis at 3 / 14 days.") {
+                write((0...2).map { day($0, score: 68 + wobble($0, 6), hours: 3) },
+                      samples: (0...2).map { samples($0, hours: workday(68), decayFrom: 78) })
             },
             DebugScenario(id: "firstWeek", group: .starting,
                           title: "First week complete",
-                          detail: "Seven consecutive days, week-over-week comparisons unlock.") {
-                write((0...6).map { day($0, score: 70 + wobble($0, 8), hours: 4) })
+                          detail: "Seven consecutive days, deep analysis at 7 / 14.") {
+                write((0...6).map { day($0, score: 70 + wobble($0, 8), hours: 4) },
+                      samples: (0...6).map { samples($0, hours: workday(70), decayFrom: 80) })
+            },
+            DebugScenario(id: "legacyOnly", group: .starting,
+                          title: "Old data, no intraday",
+                          detail: "Thirty daily records from before sampling existed — deep analysis at 0 / 14.") {
+                write((0...29).map { day($0, score: 72 + wobble($0, 8), hours: 4) })
             }
         ]
     }
@@ -267,17 +274,20 @@ enum DebugDataFactory {
             DebugScenario(id: "gapToday", group: .coverage,
                           title: "Nothing tracked today",
                           detail: "Streak of six days ending yesterday — the at-risk warning.") {
-                write((1...6).map { day($0, score: 74 + wobble($0, 6), hours: 4) })
+                write((1...6).map { day($0, score: 74 + wobble($0, 6), hours: 4) },
+                      samples: (1...6).map { samples($0, hours: workday(74), decayFrom: 84) })
             },
             DebugScenario(id: "gap3", group: .coverage,
                           title: "Three-day gap",
                           detail: "Tracked until three days ago, then silence.") {
-                write((3...9).map { day($0, score: 72 + wobble($0, 6), hours: 4) })
+                write((3...9).map { day($0, score: 72 + wobble($0, 6), hours: 4) },
+                      samples: (3...9).map { samples($0, hours: workday(72), decayFrom: 82) })
             },
             DebugScenario(id: "gap10", group: .coverage,
                           title: "Ten days away",
                           detail: "Long gap: stale trends, recalibration advice.") {
-                write((10...20).map { day($0, score: 70 + wobble($0, 8), hours: 4) })
+                write((10...20).map { day($0, score: 70 + wobble($0, 8), hours: 4) },
+                      samples: (10...20).map { samples($0, hours: workday(70), decayFrom: 80) })
             },
             DebugScenario(id: "gapMonth", group: .coverage,
                           title: "Back after a month",
@@ -306,32 +316,39 @@ enum DebugDataFactory {
             DebugScenario(id: "improving", group: .quality,
                           title: "Improving fast",
                           detail: "This week well above last — big upward trend.") {
-                write((0...13).map { day($0, score: $0 < 7 ? 84 - wobble($0, 4) : 63 + wobble($0, 4), hours: 4) })
+                write((0...13).map { day($0, score: $0 < 7 ? 84 - wobble($0, 4) : 63 + wobble($0, 4), hours: 4) },
+                      samples: (0...13).map { samples($0, hours: workday($0 < 7 ? 84 : 63), decayFrom: 88) })
             },
             DebugScenario(id: "declining", group: .quality,
                           title: "Slipping",
                           detail: "Sharp drop against last week.") {
-                write((0...13).map { day($0, score: $0 < 7 ? 58 + wobble($0, 4) : 80 - wobble($0, 4), hours: 4) })
+                write((0...13).map { day($0, score: $0 < 7 ? 58 + wobble($0, 4) : 80 - wobble($0, 4), hours: 4) },
+                      samples: (0...13).map { samples($0, hours: workday($0 < 7 ? 58 : 80), decayFrom: 76) })
             },
             DebugScenario(id: "excellent", group: .quality,
                           title: "Excellent streak",
                           detail: "Three weeks above 85 with a long run and a personal best.") {
-                write((0...20).map { day($0, score: $0 == 3 ? 97 : 87 + wobble($0, 4), hours: 5) })
+                write((0...20).map { day($0, score: $0 == 3 ? 97 : 87 + wobble($0, 4), hours: 5) },
+                      samples: (0...20).map { samples($0, hours: workday(87), decayFrom: 92) })
             },
             DebugScenario(id: "rough", group: .quality,
                           title: "Rough patch",
                           detail: "Two weeks under 55 — setup-problem advice.") {
-                write((0...13).map { day($0, score: 48 + wobble($0, 6), hours: 5) })
+                write((0...13).map { day($0, score: 48 + wobble($0, 6), hours: 5) },
+                      samples: (0...13).map { samples($0, hours: workday(48), decayFrom: 58) })
             },
             DebugScenario(id: "volatile", group: .quality,
                           title: "Very volatile",
                           detail: "Scores swinging 40 points day to day.") {
-                write((0...20).map { day($0, score: $0 % 2 == 0 ? 88 : 46, hours: 4) })
+                write((0...20).map { day($0, score: $0 % 2 == 0 ? 88 : 46, hours: 4) },
+                      samples: (0...20).map { samples($0, hours: workday($0 % 2 == 0 ? 88 : 46), decayFrom: 84) })
             },
             DebugScenario(id: "alertHeavy", group: .quality,
                           title: "Alert storm",
                           detail: "Long days with a very high alert rate.") {
-                write((0...13).map { day($0, score: 62, hours: 8, alerts: 45) })
+                write((0...13).map { day($0, score: 62, hours: 8, alerts: 45) },
+                      samples: (0...13).map { samples($0, hours: workday(62), decayFrom: 74,
+                                                      episodes: [(9, 65), (11, 70), (8, 58)]) })
             },
             DebugScenario(id: "shortSessions", group: .quality,
                           title: "Very short sessions",

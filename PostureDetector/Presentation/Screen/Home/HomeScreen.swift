@@ -18,6 +18,7 @@ struct HomeScreen: View {
     @State private var isFullscreen = false
     @State private var activeExercise: NeckExercise?
     @State private var showingCoach = false
+    @State private var showRoutePicker = false
 
     init() {
         let monitor = PostureMonitor()
@@ -85,7 +86,9 @@ struct HomeScreen: View {
                 liveState
             }
         }
-        .frame(height: 380)
+        // minHeight, not height: the live state is slightly taller than 380 and
+        // a fixed height squeezed it, shrinking every inset it declares.
+        .frame(minHeight: 380)
         .frame(maxWidth: .infinity)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(Aura.cardStroke, lineWidth: 1))
@@ -109,7 +112,11 @@ struct HomeScreen: View {
                     heroIconButton("arrow.up.left.and.arrow.down.right") { isFullscreen = true }
                 }
             }
-            .padding(.horizontal, 20).padding(.top, 18)
+            // Fixed height so the row doesn't grow when the expand button
+            // appears — otherwise every gap below it shifts. Both controls are
+            // exactly this tall, so the top inset equals the side inset.
+            .frame(height: heroRowHeight)
+            .padding(.horizontal, 20).padding(.top, 20)
 
             Spacer(minLength: 4)
 
@@ -131,8 +138,11 @@ struct HomeScreen: View {
 
             Spacer(minLength: 24)
 
-            playStopButton.padding(.bottom, 20)
+            playStopButton.padding(.bottom, 32)
         }
+        // Fill the card, so the button is measured from the card's bottom
+        // rather than floating in a centred, content-sized stack.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var heroScorePill: some View {
@@ -142,10 +152,15 @@ struct HomeScreen: View {
             Text("Today").font(.system(size: 13, weight: .medium)).foregroundColor(.secondary)
             Text("\(score)").font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
         }
-        .padding(.horizontal, 12).padding(.vertical, 7)
+        .padding(.horizontal, 12)
+        .frame(height: heroRowHeight)
         .background(Aura.softFill, in: Capsule())
         .overlay(Capsule().stroke(Aura.cardStroke, lineWidth: 1))
     }
+
+    /// Both hero controls share this height so neither is inset from the top by
+    /// its own centring.
+    private var heroRowHeight: CGFloat { 34 }
 
     private var playStopButton: some View {
         let on = postureMonitor.isMonitoring
@@ -176,7 +191,7 @@ struct HomeScreen: View {
     private func heroIconButton(_ icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundColor(.secondary)
-                .frame(width: 38, height: 38)
+                .frame(width: heroRowHeight, height: heroRowHeight)
                 .background(Aura.softFill, in: Circle())
                 .overlay(Circle().stroke(Aura.cardStroke, lineWidth: 1))
         }
@@ -201,11 +216,32 @@ struct HomeScreen: View {
             Text("Pop them in and pick them as the audio output.")
                 .font(.system(size: 14)).foregroundColor(.secondary)
                 .multilineTextAlignment(.center).padding(.horizontal, 34)
+            // Lets people with more than one pair pick which output to use.
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showRoutePicker = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "airplayaudio").font(.system(size: 14, weight: .semibold))
+                    Text("Choose AirPods").font(.system(size: 15, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 20).padding(.vertical, 12)
+                .background(
+                    LinearGradient(colors: [Aura.accent, Aura.violet],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: Capsule()
+                )
+                .shadow(color: Aura.accent.opacity(0.3), radius: 10, y: 4)
+            }
+            .buttonStyle(.plain)
+            .routePicker(isPresented: $showRoutePicker)
+            .padding(.top, 6)
+
             Button(action: { bluetoothMonitor.forceConnect() }) {
                 Text("Not connecting? Tap to nudge them over")
                     .font(.system(size: 13, weight: .medium)).foregroundColor(Aura.accent)
             }
-            .padding(.top, 4)
         }
     }
 
@@ -567,41 +603,97 @@ struct HomeScreen: View {
 
 // MARK: - Fullscreen visualizer
 
+/// Pure black so an OLED panel keeps those pixels off, with a single small
+/// glow that drifts with the head. Green while upright; when posture slips it
+/// turns red and grows a little, which is the only cue that needs to carry
+/// across a dark room.
 struct FullscreenVisualizerView: View {
     let pitch: Double
     let roll: Double
     let postureStatus: PostureStatus
     @Binding var isPresented: Bool
 
-    private var tint: Color {
+    @State private var breathing = false
+
+    private var isSlouching: Bool {
         switch postureStatus {
-        case .good: return Aura.green
-        case .forwardLean, .sidewaysLean, .poorPosture: return Aura.coral
-        case .unknown: return Aura.accent
+        case .forwardLean, .sidewaysLean, .poorPosture: return true
+        case .good, .unknown: return false
         }
     }
 
+    private var glowColor: Color {
+        isSlouching ? Color(red: 1.0, green: 0.24, blue: 0.24)
+                    : Color(red: 0.20, green: 0.90, blue: 0.55)
+    }
+
+    /// Deviation from the calibrated neutral, in the same units the monitor uses.
+    private var offset: CGSize {
+        let dPitch = pitch - CalibrationStore.pitch
+        let dRoll = roll - CalibrationStore.roll
+        // Deliberately gentle: the dot hints at movement, it doesn't track it.
+        let travel: Double = 90
+        return CGSize(width: clamp(dRoll) * travel, height: clamp(dPitch) * travel)
+    }
+
+    private func clamp(_ value: Double) -> Double {
+        max(-1, min(1, value / 0.5))
+    }
+
+    private var glowSize: CGFloat { isSlouching ? 132 : 96 }
+    private var glowOpacity: Double { isSlouching ? 0.95 : 0.65 }
+
     var body: some View {
         ZStack {
-            AuraBackground()
-            Circle().fill(tint).frame(width: 360, height: 360).blur(radius: 120).opacity(0.35)
-                .animation(.easeInOut(duration: 0.6), value: postureStatus)
+            Color.black.ignoresSafeArea()
 
-            PostureVisualizer(pitch: pitch, roll: roll, postureStatus: postureStatus).padding(40)
+            ZStack {
+                // Wide, very soft halo
+                Circle()
+                    .fill(glowColor)
+                    .frame(width: glowSize * 2.4, height: glowSize * 2.4)
+                    .blur(radius: 70)
+                    .opacity(glowOpacity * 0.28)
 
+                // The core
+                Circle()
+                    .fill(glowColor)
+                    .frame(width: glowSize, height: glowSize)
+                    .blur(radius: 26)
+                    .opacity(glowOpacity)
+
+                Circle()
+                    .fill(glowColor)
+                    .frame(width: glowSize * 0.28, height: glowSize * 0.28)
+                    .blur(radius: 6)
+                    .opacity(min(1, glowOpacity + 0.2))
+            }
+            .scaleEffect(breathing ? 1.06 : 0.97)
+            .offset(offset)
+            .animation(.easeOut(duration: 0.35), value: offset)
+            .animation(.easeInOut(duration: 0.7), value: postureStatus)
+            .animation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true), value: breathing)
+
+            // Close control, kept dim so it does not light the panel up.
             VStack {
                 HStack {
                     Spacer()
-                    Button(action: { isPresented = false }) {
-                        Image(systemName: "xmark").font(.system(size: 18, weight: .semibold)).foregroundColor(.primary)
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.35))
                             .frame(width: 44, height: 44)
-                            .background(Aura.softFill, in: Circle())
-                            .overlay(Circle().stroke(Aura.cardStroke, lineWidth: 1))
+                            .contentShape(Rectangle())
                     }
-                    .padding(24)
+                    .padding(.trailing, 12)
+                    .padding(.top, 8)
                 }
                 Spacer()
             }
         }
+        .statusBarHidden()
+        .onAppear { breathing = true }
     }
 }
